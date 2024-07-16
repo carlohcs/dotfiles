@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Prevent errors with homebrew
+export PATH="/opt/homebrew/bin:${PATH}"
+
+# GoDaddy Stuffs
+export GODADDY_WORKSPACE="~/Poynt"
+export GODADDY_POYNT="${GODADDY_WORKSPACE}"
+export POYNT_KEYS="/Users/carlohcs/Poynt"

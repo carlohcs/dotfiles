@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+# Easier navigation: .., ..., ...., ....., ~ and -
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+alias ~="cd ~" # `cd` is probably faster to type though
+alias -- -="cd -"
+
+alias nginx-config="cd /opt/homebrew/etc/nginx"
+alias godaddy-workspace="cd ${GODADDY_WORKSPACE}"
+alias poynt-repositories="cd ${GODADDY_POYNT}"
+alias repository="cd /Users/carlohcs/Documents/repository"
+
+alias edit-bashrc="nvim $ZSH_CUSTOM/carlohcs.zsh"
+alias update-bashrc=". ~/.zshrc"
+
+# Shortcuts
+alias g="git"
+alias vim="nvim"
+alias vi="nvim"
+
+# Always enable colored `grep` output
+# Note: `GREP_OPTIONS="--color=auto"` is deprecated, hence the alias usage.
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+
+# IP addresses
+alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias localip="ipconfig getifaddr en0"
+alias ips="ifconfig -a | grep -o 'inet6\? \(addr:\)\?\s\?\(\(\([0-9]\+\.\)\{3\}[0-9]\+\)\|[a-fA-F0-9:]\+\)' | awk '{ sub(/inet6? (addr:)? ?/, \"\"); print }'"
+
+# Flush Directory Service cache
+alias flush="dscacheutil -flushcache && killall -HUP mDNSResponder"
+
+# Recursively delete `.DS_Store` files
+alias cleanup-ds-store="find . -type f -name '*.DS_Store' -ls -delete"
+
+# Show/hide hidden files in Finder
+alias show-finder="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
+alias hide-finder="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
+
+# Hide/show all desktop icons (useful when presenting)
+alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder"
+alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder"
+
+# One of @janmoesen’s ProTip™s
+for method in GET HEAD POST PUT DELETE TRACE OPTIONS; do
+	alias "${method}"="lwp-request -m '${method}'"
+done
+
+# Hosts
+alias edit-hosts='sudo vim /etc/hosts'
+
+# Git Commands
+#alias gitc-remove-merged-branches="git branch --merged master --no-color | grep -v "master\|test" | xargs git branch -d"
+alias git-clean-merged-branches="git fetch -p && git branch -vv | awk '/: gone]/{print $1}' | xargs git branch -D"
+alias git-clean-remove-all-branches="git branch --no-merged | egrep -v '(^\*|master|dev|main|origin)' | xargs git branch -D"
+alias git-clean-branches="git gc --prune=now"
+
+# Python
+alias python="$(pyenv which python)"
+alias pip="$(pyenv which pip)"
+alias p3="pyenv global 3.10.4"
+alias p2="pyenv global 2.7.18"
+
+# AWS
+alias aws-ssm='aws ssm start-session --target'
+alias aws-login='rm -rf ~/.aws/boto/cache/* && get-dev-private-instances.sh'
+#alias aws-list='get-dev-private-instances.sh'
+#alias aws-eu='export AWS_PROFILE=eu-prod'
+#alias aws-us='export AWS_PROFILE=us-prod'
+#alias aws-list-eu='get-dev-private-instances-eu.sh'
+#alias aws-okta-processor="$(pyenv which aws-okta-processor)"
+#alias aws-connect-godaddy="eval $(aws-okta-processor authenticate -e -u ccarvalhodesant@godaddy.com -o godaddy.okta.com)"
+
+# NPM
+alias npmg='rm -rf ~/.npmrc && cp ${POYNT_KEYS}/.npmrc-godaddy ~/.npmrc'
+alias npmp='rm -rf ~/.npmrc && cp ${POYNT_KEYS}/.npmrc-poynt ~/.npmrc'
+alias npmgshared='rm -rf ~/.npmrc && cp ${POYNT_KEYS}/.npmrc-godaddy-commerce-shared ~/.npmrc'
+alias npmd='echo "registry=https://registry.npmjs.org" >  ~/.npmrc'
+
+# JAVA stuffs
+alias get-java-versions="/usr/libexec/java_home -V"
+switch-java-latest() { export JAVA_HOME=`/usr/libexec/java_home -v 21.0.2` }
+switch-java-17() { export JAVA_HOME=`/usr/libexec/java_home -v 17.0.10` }
+
+# Screenshot/Screenrecord
+alias screenshot-terminal='adb exec-out screencap -p > screenshot.png'
+alias screenrecord-terminal='adbe screenrecord video.mp4'
+
+# Pós
+alias connect-mysql="docker exec -it food-mysqldb-1 /bin/bash"
+alias food="cd /Users/carlohcs/Documents/repository/java/food"
+
+# enable run terminal at x86 for specific applications
+run-terminal-x86() { 
+ arch -x86_64 zsh
+}
+
+# Convert videos
+# https://unix.stackexchange.com/questions/28803/how-can-i-reduce-a-videos-size-with-ffmpeg
+convert-video() {
+  local inputVideo=$1
+
+  ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 "$inputVideo.mp4"
+}
+
+convert-video-no-audio-removed-frames() {
+  local inputVideo=$1
+
+  ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 -vf mpdecimate,setpts=N/FRAME_RATE/TB "$inputVideo.mp4"
+}
+
+# Always print contents of directory when entering
+cd() {
+    builtin cd "$@" || return 1
+    l
+}
+
+# Copy contents of a file to the clipboard
+copyfile() (
+    # ARGS: 1 (Required) - Path to file
+
+    if [ -n "$1" ] && [ -f "$1" ]; then
+        pbcopy <"${1}"
+        return 0
+    else
+        printf "File not found: %s\n" "$1"
+        return 1
+    fi
+)
+
+# Backup file with time stamp
+buf() {
+    local filename
+    local filetime
+
+    filename="${1}"
+    filetime=$(date +%Y%m%d_%H%M%S)
+    cp -a "${filename}" "${filename}_${filetime}"
+}
+
+# Prints URL of current git repository
+gurl() (
+
+    local remote remotename host user_repo
+
+    remotename="${*:-origin}"
+    remote="$(git remote -v | awk '/^'"${remotename}"'.*\(push\)$/ {print $2}')"
+    [[ "${remote}" ]] || return
+    host="$(echo "${remote}" | perl -pe 's/.*@//;s/:.*//')"
+    user_repo="$(echo "${remote}" | perl -pe 's/.*://;s/\.git$//')"
+    echo "https://${host}/${user_repo}"
+)
+
+# MacOS Specific Shortcuts
+# ###########################
+
+if [[ ${OSTYPE} == "darwin"* ]]; then # Only load these on a MacOS computer
+
+    ## ALIASES ##
+    alias cpwd='pwd | tr -d "\n" | pbcopy'                        # Copy the working path to clipboard
+    alias cl="fc -e -|pbcopy"                                     # Copy output of last command to clipboard
+    alias caff="caffeinate -ism"                                  # Run command without letting mac sleep
+    alias cleanDS="find . -type f -name '*.DS_Store' -ls -delete" # Delete .DS_Store files on Macs
+    alias showHidden='defaults write com.apple.finder AppleShowAllFiles TRUE'
+    alias hideHidden='defaults write com.apple.finder AppleShowAllFiles FALSE'
+    alias capc="screencapture -c"
+    alias capic="screencapture -i -c"
+    alias capiwc="screencapture -i -w -c"
+
+    CAPTURE_FOLDER="${HOME}/Desktop"
+
+    function cap() {
+        # DESC: Capture the screen to the desktop
+        screencapture "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    }
+
+    function capi() {
+        # DESC: Capture the selected screen area to the desktop
+        screencapture -i "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    }
+
+    function capiw() {
+        # DESC: Capture the selected window to the desktop
+        screencapture -i -w "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    }
+
+    # Open the finder to a specified path or to current directory.
+    f() {
+        # DESC:  Opens the Finder to specified directory. (Default is current oath)
+        # ARGS:  $1 (optional): Path to open in finder
+        # REQS:  MacOS
+        # USAGE: f [path]
+        open -a "Finder" "${1:-.}"
+    }
+fi
