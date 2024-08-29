@@ -9,6 +9,11 @@ export PATH="$PATH:/Users/carlohcs/.local/bin"
 # asdf
 . /opt/homebrew/opt/asdf/libexec/asdf.sh
 
+# Google Cloud SDK
+. ~/google-cloud-sdk/path.zsh.inc
+# Google Cloud SDK (completion)
+. ~/google-cloud-sdk/completion.zsh.inc
+
 # Load known SSH keys
 ssh-add -A 2>/dev/null;
 
@@ -48,6 +53,14 @@ eval "$(starship init zsh)"
 # for option in autocd globstar; do
 # 	shopt -s "$option" 2> /dev/null;
 # done;
+
+# Pyenv
+# Add pyenv ao PATH - this is not needed
+# export PATH="$HOME/.pyenv/bin:$PATH"
+
+# Inicialize pyenv
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
 
 # Add tab completion for many Bash commands
 if which brew &> /dev/null && [ -r "$(brew --prefix)/etc/profile.d/bash_completion.sh" ]; then

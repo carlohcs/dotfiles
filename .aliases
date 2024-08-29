@@ -9,9 +9,17 @@ alias ~="cd ~" # `cd` is probably faster to type though
 alias -- -="cd -"
 
 alias nginx-config="cd /opt/homebrew/etc/nginx"
+alias repository="cd ~/Documents/repository"
+alias dotfiles="cd ~/Documents/repository/dotfiles"
+
+# GoDaddy
 alias godaddy-workspace="cd ${GODADDY_WORKSPACE}"
 alias poynt-repositories="cd ${GODADDY_POYNT}"
-alias repository="cd /Users/carlohcs/Documents/repository"
+alias hermes="cd ${GODADDY_POYNT}/hermes"
+alias mercury="cd ${GODADDY_POYNT}/mercury"
+alias mercury-repo="cd ${GODADDY_POYNT}/mercury-repo"
+alias web="cd ${GODADDY_POYNT}/web"
+alias web-repo="cd ${GODADDY_POYNT}/web-repo"
 
 alias edit-bashrc="nvim $ZSH_CUSTOM/carlohcs.zsh"
 alias update-bashrc=". ~/.zshrc"
@@ -26,6 +34,8 @@ alias vi="nvim"
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
+
+alias cat="bat"
 
 # IP addresses
 alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
@@ -52,7 +62,7 @@ for method in GET HEAD POST PUT DELETE TRACE OPTIONS; do
 done
 
 # Hosts
-alias edit-hosts='sudo vim /etc/hosts'
+alias edit-hosts='nvim /etc/hosts'
 
 # Git Commands
 #alias gitc-remove-merged-branches="git branch --merged master --no-color | grep -v "master\|test" | xargs git branch -d"
@@ -67,11 +77,16 @@ alias p3="pyenv global 3.10.4"
 alias p2="pyenv global 2.7.18"
 
 # AWS
+alias edit-aws-credentials="nvim ~/.aws/credentials"
 alias aws-ssm='aws ssm start-session --target'
 alias aws-login='rm -rf ~/.aws/boto/cache/* && get-dev-private-instances.sh'
 #alias aws-list='get-dev-private-instances.sh'
-#alias aws-eu='export AWS_PROFILE=eu-prod'
-#alias aws-us='export AWS_PROFILE=us-prod'
+
+# AWS - Profiles
+alias aws-eu='export AWS_PROFILE=eu-prod'
+alias aws-us='export AWS_PROFILE=us-prod'
+alias aws-default='export AWS_PROFILE=default'
+alias aws-academy='export AWS_PROFILE=academy'
 #alias aws-list-eu='get-dev-private-instances-eu.sh'
 #alias aws-okta-processor="$(pyenv which aws-okta-processor)"
 #alias aws-connect-godaddy="eval $(aws-okta-processor authenticate -e -u ccarvalhodesant@godaddy.com -o godaddy.okta.com)"
@@ -95,6 +110,8 @@ alias screenrecord-terminal='adbe screenrecord video.mp4'
 alias connect-mysql="docker exec -it food-mysqldb-1 /bin/bash"
 alias food="cd /Users/carlohcs/Documents/repository/java/food"
 
+alias kubectl-default-context="kubectl config set-context docker-kubernetes"
+
 # enable run terminal at x86 for specific applications
 run-terminal-x86() { 
  arch -x86_64 zsh
@@ -113,6 +130,20 @@ convert-video-no-audio-removed-frames() {
 
   ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 -vf mpdecimate,setpts=N/FRAME_RATE/TB "$inputVideo.mp4"
 }
+
+convert-video-to-gif() {
+    local inputVideo=$1
+    
+    ffmpeg -i "$inputVideo" -vf "fps=60,scale=1046:-1:flags=lanczos,mpdecimate" -c:v gif "$inputVideo.gif"
+}
+
+download-m3u8() {
+  local inputM3u8=$1
+  local outputName=$2
+
+  ffmpeg -i "${inputM3u8}" -map p:1 -c:v h264_videotoolbox -b:v 2500k -vf scale=1280:-1 -c:a aac -strict -2 "${outputName}"
+}
+
 
 # Always print contents of directory when entering
 cd() {
