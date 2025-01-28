@@ -9,7 +9,7 @@ DIR="$(dirname "$(readlink -f "$0")")"
 . "$DIR/.aliases"
 
 # Copy Vim configuration
-yes | cp "$DIR/.vimrc" ~/.vimrc > /dev/null 2>&1
+#yes | cp "$DIR/.vimrc" ~/.vimrc > /dev/null 2>&1
 
 # Load macOS specific configurations
 # . ./macos

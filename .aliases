@@ -58,7 +58,7 @@ alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && k
 
 # One of @janmoesen’s ProTip™s
 for method in GET HEAD POST PUT DELETE TRACE OPTIONS; do
-	alias "${method}"="lwp-request -m '${method}'"
+    alias "${method}"="lwp-request -m '${method}'"
 done
 
 # Hosts
@@ -85,7 +85,9 @@ alias aws-login='rm -rf ~/.aws/boto/cache/* && get-dev-private-instances.sh'
 # AWS - Profiles
 alias aws-eu='export AWS_PROFILE=eu-prod'
 alias aws-us='export AWS_PROFILE=us-prod'
+alias aws-dev-test='export AWS_PROFILE=us-test-dev'
 alias aws-default='export AWS_PROFILE=default'
+alias aws-local='export AWS_PROFILE=local'
 alias aws-academy='export AWS_PROFILE=academy'
 #alias aws-list-eu='get-dev-private-instances-eu.sh'
 #alias aws-okta-processor="$(pyenv which aws-okta-processor)"
@@ -113,22 +115,22 @@ alias food="cd /Users/carlohcs/Documents/repository/java/food"
 alias kubectl-default-context="kubectl config set-context docker-kubernetes"
 
 # enable run terminal at x86 for specific applications
-run-terminal-x86() { 
- arch -x86_64 zsh
+run-terminal-x86() {
+    arch -x86_64 zsh
 }
 
 # Convert videos
 # https://unix.stackexchange.com/questions/28803/how-can-i-reduce-a-videos-size-with-ffmpeg
 convert-video() {
-  local inputVideo=$1
-
-  ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 "$inputVideo.mp4"
+    local inputVideo=$1
+    
+    ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 "$inputVideo.mp4"
 }
 
 convert-video-no-audio-removed-frames() {
-  local inputVideo=$1
-
-  ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 -vf mpdecimate,setpts=N/FRAME_RATE/TB "$inputVideo.mp4"
+    local inputVideo=$1
+    
+    ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 -vf mpdecimate,setpts=N/FRAME_RATE/TB "$inputVideo.mp4"
 }
 
 convert-video-to-gif() {
@@ -137,11 +139,18 @@ convert-video-to-gif() {
     ffmpeg -i "$inputVideo" -vf "fps=60,scale=1046:-1:flags=lanczos,mpdecimate" -c:v gif "$inputVideo.gif"
 }
 
-download-m3u8() {
-  local inputM3u8=$1
-  local outputName=$2
+convert-image() {
+    local inputImage=$1
+    local quality=$2
+    
+    sips -s format jpeg -s formatOptions "$quality" $inputImage --out ./converted-image.jpeg
+}
 
-  ffmpeg -i "${inputM3u8}" -map p:1 -c:v h264_videotoolbox -b:v 2500k -vf scale=1280:-1 -c:a aac -strict -2 "${outputName}"
+download-m3u8() {
+    local inputM3u8=$1
+    local outputName=$2
+    
+    ffmpeg -i "${inputM3u8}" -map p:1 -c:v h264_videotoolbox -b:v 2500k -vf scale=1280:-1 -c:a aac -strict -2 "${outputName}"
 }
 
 
@@ -154,7 +163,7 @@ cd() {
 # Copy contents of a file to the clipboard
 copyfile() (
     # ARGS: 1 (Required) - Path to file
-
+    
     if [ -n "$1" ] && [ -f "$1" ]; then
         pbcopy <"${1}"
         return 0
@@ -168,7 +177,7 @@ copyfile() (
 buf() {
     local filename
     local filetime
-
+    
     filename="${1}"
     filetime=$(date +%Y%m%d_%H%M%S)
     cp -a "${filename}" "${filename}_${filetime}"
@@ -176,9 +185,9 @@ buf() {
 
 # Prints URL of current git repository
 gurl() (
-
+    
     local remote remotename host user_repo
-
+    
     remotename="${*:-origin}"
     remote="$(git remote -v | awk '/^'"${remotename}"'.*\(push\)$/ {print $2}')"
     [[ "${remote}" ]] || return
@@ -191,7 +200,7 @@ gurl() (
 # ###########################
 
 if [[ ${OSTYPE} == "darwin"* ]]; then # Only load these on a MacOS computer
-
+    
     ## ALIASES ##
     alias cpwd='pwd | tr -d "\n" | pbcopy'                        # Copy the working path to clipboard
     alias cl="fc -e -|pbcopy"                                     # Copy output of last command to clipboard
@@ -202,24 +211,24 @@ if [[ ${OSTYPE} == "darwin"* ]]; then # Only load these on a MacOS computer
     alias capc="screencapture -c"
     alias capic="screencapture -i -c"
     alias capiwc="screencapture -i -w -c"
-
+    
     CAPTURE_FOLDER="${HOME}/Desktop"
-
+    
     function cap() {
         # DESC: Capture the screen to the desktop
         screencapture "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
     }
-
+    
     function capi() {
         # DESC: Capture the selected screen area to the desktop
         screencapture -i "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
     }
-
+    
     function capiw() {
         # DESC: Capture the selected window to the desktop
         screencapture -i -w "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
     }
-
+    
     # Open the finder to a specified path or to current directory.
     f() {
         # DESC:  Opens the Finder to specified directory. (Default is current oath)
@@ -227,5 +236,9 @@ if [[ ${OSTYPE} == "darwin"* ]]; then # Only load these on a MacOS computer
         # REQS:  MacOS
         # USAGE: f [path]
         open -a "Finder" "${1:-.}"
+    }
+
+    intellij() {
+        open -na "IntelliJ IDEA.app" --args "$@"
     }
 fi
