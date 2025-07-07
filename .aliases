@@ -11,6 +11,7 @@ alias -- -="cd -"
 alias nginx-config="cd /opt/homebrew/etc/nginx"
 alias repository="cd ~/Documents/repository"
 alias dotfiles="cd ~/Documents/repository/dotfiles"
+alias edit-dotfiles="cd ~/Documents/repository/dotfiles && code ."
 
 # GoDaddy
 alias godaddy-workspace="cd ${GODADDY_WORKSPACE}"
@@ -71,8 +72,8 @@ alias git-clean-remove-all-branches="git branch --no-merged | egrep -v '(^\*|mas
 alias git-clean-branches="git gc --prune=now"
 
 # Python
-alias python="$(pyenv which python)"
-alias pip="$(pyenv which pip)"
+# alias python="$(pyenv which python)"
+# alias pip="$(pyenv which pip)"
 alias p3="pyenv global 3.10.4"
 alias p2="pyenv global 2.7.18"
 
@@ -89,9 +90,27 @@ alias aws-dev-test='export AWS_PROFILE=us-test-dev'
 alias aws-default='export AWS_PROFILE=default'
 alias aws-local='export AWS_PROFILE=local'
 alias aws-academy='export AWS_PROFILE=academy'
+
+# AWS Hermes Profiles
+alias aws-hermes-dev='export AWS_PROFILE=hermes-dev'
+alias aws-hermes-test='export AWS_PROFILE=hermes-test'
+alias aws-hermes-prod='export AWS_PROFILE=hermes-prod'
 #alias aws-list-eu='get-dev-private-instances-eu.sh'
 #alias aws-okta-processor="$(pyenv which aws-okta-processor)"
 #alias aws-connect-godaddy="eval $(aws-okta-processor authenticate -e -u ccarvalhodesant@godaddy.com -o godaddy.okta.com)"
+
+# Kubernetes
+alias set-kubeconfig-local='docker context use desktop-linux && kubectl config use-context docker-desktop'
+alias set-gdp-kubeconfig-dev-env='aws eks update-kubeconfig --region us-west-2 --name eks-dev-1-30'
+alias set-gdp-kubeconfig-test-env='aws eks update-kubeconfig --region us-west-2 --name eks-test-1-30'
+alias set-gdp-kubeconfig-prod-env='aws eks update-kubeconfig --region us-west-2 --name eks-prod-1-30'
+
+get-hermes-pods() { 
+    kubectl get pods --namespace gdp | grep 'hermes' 
+}
+connect-hermes-pod() { 
+    kubectl exec -it --namespace gdp $(kubectl get pods --namespace gdp | grep 'hermes' | awk '{print $1}') -- /bin/bash 
+}
 
 # NPM
 alias npmg='rm -rf ~/.npmrc && cp ${POYNT_KEYS}/.npmrc-godaddy ~/.npmrc'
@@ -153,6 +172,16 @@ download-m3u8() {
     ffmpeg -i "${inputM3u8}" -map p:1 -c:v h264_videotoolbox -b:v 2500k -vf scale=1280:-1 -c:a aac -strict -2 "${outputName}"
 }
 
+kill-port() {
+    local port=$1
+    
+    if [ -z "$port" ]; then
+        echo "Usage: kill-port <port>"
+        return 1
+    fi
+    
+    lsof -ti tcp:"$port" | xargs kill -9
+}
 
 # Always print contents of directory when entering
 cd() {

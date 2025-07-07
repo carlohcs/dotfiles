@@ -26,6 +26,8 @@ esac
 # pnpm end
 
 # Starship
+# export STARSHIP_CONFIG=~/.dotfiles/starship.toml
+export STARSHIP_CONFIG="/Users/carlohcs/Documents/repository/dotfiles/starship.toml"
 eval "$(starship init zsh)"
 
 # ONLY WORKS FOR BASH

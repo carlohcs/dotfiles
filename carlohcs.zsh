@@ -3,10 +3,13 @@
 DIR="$(dirname "$(readlink -f "$0")")"
 
 # Loading variables
-. "$DIR/.variables"
+[ -f "$DIR/.variables" ] && . "$DIR/.variables"
+
+# Loading sensitive variables
+[ -f "$DIR/.sensitive_variables" ] && . "$DIR/.sensitive_variables"
 
 # Loading aliases
-. "$DIR/.aliases"
+[ -f "$DIR/.aliases" ] && . "$DIR/.aliases"
 
 # Copy Vim configuration
 #yes | cp "$DIR/.vimrc" ~/.vimrc > /dev/null 2>&1
@@ -15,4 +18,4 @@ DIR="$(dirname "$(readlink -f "$0")")"
 # . ./macos
 
 # Loading .bash_profile
- . "$DIR/.bash_profile"
+[ -f "$DIR/.bash_profile" ] && . "$DIR/.bash_profile"
