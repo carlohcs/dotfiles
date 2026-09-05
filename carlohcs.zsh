@@ -11,6 +11,9 @@ DIR="$(dirname "$(readlink -f "$0")")"
 # Loading aliases
 [ -f "$DIR/.aliases" ] && . "$DIR/.aliases"
 
+# Loading work stuff
+[ -f "$DIR/.work" ] && . "$DIR/.work"
+
 # Copy Vim configuration
 #yes | cp "$DIR/.vimrc" ~/.vimrc > /dev/null 2>&1
 

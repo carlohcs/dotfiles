@@ -65,6 +65,12 @@ done
 # Hosts
 alias edit-hosts='nvim /etc/hosts'
 
+# Personal Aliases
+alias mission="cd /Users/carlohcs/Documents/repository/missao-pessoal-all/mission"
+
+export EDITOR=vim
+export VISUAL=vim
+
 # Git Commands
 #alias gitc-remove-merged-branches="git branch --merged master --no-color | grep -v "master\|test" | xargs git branch -d"
 alias git-clean-merged-branches="git fetch -p && git branch -vv | awk '/: gone]/{print $1}' | xargs git branch -D"
@@ -95,6 +101,155 @@ alias aws-academy='export AWS_PROFILE=academy'
 alias aws-hermes-dev='export AWS_PROFILE=hermes-dev'
 alias aws-hermes-test='export AWS_PROFILE=hermes-test'
 alias aws-hermes-prod='export AWS_PROFILE=hermes-prod'
+
+clean-aws-current-session() {
+    # Unset environment variables
+    unset AWS_ACCESS_KEY_ID
+    unset AWS_SECRET_ACCESS_KEY
+    unset AWS_SESSION_TOKEN
+    unset AWS_PROFILE
+    unset AWS_DEFAULT_PROFILE
+    unset AWS_REGION
+    unset AWS_DEFAULT_REGION
+
+    # Remove SSO and CLI cache
+    rm -rf ~/.aws/sso/cache/
+    rm -rf ~/.aws/cli/cache/
+
+    # Remove aws-okta-processor cache
+    rm -rf ~/.aws-okta-processor/
+
+    # Clean session tokens from credentials file while preserving personal credentials
+    if [ -f ~/.aws/credentials ]; then
+        # Create backup before cleaning
+        cp ~/.aws/credentials ~/.aws/credentials.backup.$(date +%Y%m%d_%H%M%S)
+        # Remove only session tokens and temporary credentials, keep personal credentials
+        sed -i.bak '/aws_session_token/d; /aws_access_key_id.*ASIA/d; /aws_secret_access_key.*[A-Za-z0-9+/]\{32,\}/d' ~/.aws/credentials 2>/dev/null
+        echo "✓ AWS session tokens removed from credentials (personal credentials preserved)"
+    fi
+
+    if [ -d ~/.aws/boto ]; then
+        echo "  ✓ ~/.aws/boto directory exists"
+        # Create backup before cleaning
+        cp -r ~/.aws/boto ~/.aws/boto.backup.$(date +%Y%m%d_%H%M%S)
+        rm -rf ~/.aws/boto/cache/ 2>/dev/null || true
+        echo "  ✓ Boto cache cleared (backup created)"
+    fi
+
+    # Clear any session tokens from config file
+    if [ -f ~/.aws/config ]; then
+        # Remove any lines containing session tokens or temporary credentials
+        sed -i.bak '/aws_session_token/d; /aws_access_key_id.*ASIA/d; /aws_secret_access_key.*temp/d' ~/.aws/config 2>/dev/null
+        echo "✓ AWS session tokens removed from config"
+    fi
+
+    # Try to logout from SSO sessions
+    aws sso logout 2>/dev/null || true
+
+    # Clear any potential session files in temp directories
+    rm -rf /tmp/aws-* 2>/dev/null || true
+    rm -rf ~/Library/Caches/aws-cli/ 2>/dev/null || true
+
+    # Clear Docker context if using AWS credentials there
+    unset AWS_SHARED_CREDENTIALS_FILE
+    unset AWS_CONFIG_FILE
+
+    echo "✓ AWS Session Completely Cleaned"
+    echo "✓ Personal credentials preserved (only session tokens removed)"
+    echo "✓ Credentials backed up as safety measure"
+    echo "Note: You may need to restart your terminal session for complete cleanup"
+}
+
+restore-aws-credentials() {
+    local latest_backup=$(ls -t ~/.aws/credentials.backup.* 2>/dev/null | head -n 1)
+    
+    if [ -n "$latest_backup" ]; then
+        cp "$latest_backup" ~/.aws/credentials
+        echo "✓ AWS credentials restored from: $(basename $latest_backup)"
+        echo "Available backups:"
+        ls -la ~/.aws/credentials.backup.* 2>/dev/null | awk '{print "  " $9 " (" $6 " " $7 " " $8 ")"}'
+    else
+        echo "✗ No AWS credentials backup found"
+    fi
+
+    # Restore Boto Cache
+    local latest_boto_backup=$(ls -td ~/.aws/boto.backup.* 2>/dev/null | head -n 1)
+    if [ -n "$latest_boto_backup" ]; then
+        rm -rf ~/.aws/boto 2>/dev/null || true
+        cp -r "$latest_boto_backup" ~/.aws/boto
+        echo "✓ Boto cache restored from: $(basename $latest_boto_backup)"
+    else
+        echo "  No Boto cache backup found"
+    fi
+}
+
+clean-aws-tokens-only() {
+    # Quick cleanup of session tokens without backup
+    echo "🧹 Cleaning AWS session tokens only..."
+    
+    # Clean session tokens from credentials file
+    if [ -f ~/.aws/credentials ]; then
+        sed -i.tmp '/aws_session_token/d; /aws_access_key_id.*ASIA/d' ~/.aws/credentials 2>/dev/null
+        rm -f ~/.aws/credentials.tmp 2>/dev/null
+        echo "✓ Session tokens removed from credentials"
+    fi
+
+    # Clean session tokens from config file
+    if [ -f ~/.aws/config ]; then
+        sed -i.tmp '/aws_session_token/d; /aws_access_key_id.*ASIA/d' ~/.aws/config 2>/dev/null
+        rm -f ~/.aws/config.tmp 2>/dev/null
+        echo "✓ Session tokens removed from config"
+    fi
+
+    # Clear environment variables
+    unset AWS_SESSION_TOKEN
+    unset AWS_ACCESS_KEY_ID
+    unset AWS_SECRET_ACCESS_KEY
+    
+    echo "✓ AWS session tokens cleaned (personal credentials preserved)"
+}
+
+check-aws-session() {
+    echo "=== AWS Session Status ==="
+    
+    # Check environment variables
+    echo "\n🔧 Environment Variables:"
+    env | grep -E "^AWS_" | sort || echo "  No AWS environment variables set"
+    
+    # Check credentials file
+    echo "\n📁 Credentials File:"
+    if [ -f ~/.aws/credentials ]; then
+        echo "  ✓ ~/.aws/credentials exists"
+        echo "  Profiles:"
+        grep '^\[' ~/.aws/credentials | sed 's/\[//g;s/\]//g;s/^/    /'
+    else
+        echo "  ✗ ~/.aws/credentials not found"
+    fi
+    
+    # Check config file
+    echo "\n⚙️  Config File:"
+    if [ -f ~/.aws/config ]; then
+        echo "  ✓ ~/.aws/config exists"
+    else
+        echo "  ✗ ~/.aws/config not found"
+    fi
+    
+    # Check active session
+    echo "\n🔐 Current Session:"
+    aws sts get-caller-identity 2>/dev/null && echo "  ✓ Active AWS session found" || echo "  ✗ No active AWS session"
+    
+    # Check backups
+    echo "\n💾 Available Backups:"
+    local backups=$(ls ~/.aws/credentials.backup.* 2>/dev/null)
+    if [ -n "$backups" ]; then
+        ls -la ~/.aws/credentials.backup.* | awk '{print "  " $9 " (" $6 " " $7 " " $8 ")"}'
+    else
+        echo "  No credential backups found"
+    fi
+    
+    echo "\n==========================="
+}
+
 #alias aws-list-eu='get-dev-private-instances-eu.sh'
 #alias aws-okta-processor="$(pyenv which aws-okta-processor)"
 #alias aws-connect-godaddy="eval $(aws-okta-processor authenticate -e -u ccarvalhodesant@godaddy.com -o godaddy.okta.com)"
@@ -133,6 +288,77 @@ alias food="cd /Users/carlohcs/Documents/repository/java/food"
 
 alias kubectl-default-context="kubectl config set-context docker-kubernetes"
 
+# CLAUDE AI
+# Commented by now due to headroom proxy usage. Uncomment if you want to use the direct claude command without the headroom proxy.
+# alias run-claude="ANTHROPIC_BASE_URL=$ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN=$GOCODE_API_TOKEN ANTHROPIC_MODEL=$ANTHROPIC_MODEL claude"
+
+# --- Colima & Docker Helpers ---
+
+# Shortcuts for Docker and Colima commands
+alias d='docker'
+alias dc='docker-compose'
+alias cstart='colima start'
+alias cstop='colima stop'
+alias cstat='colima status && docker ps'
+
+colima-setup() {
+    colima start --vm-type=vz --vz-rosetta --cpu 6 --memory 14 --disk 100 --mount-type=virtiofs --save-config
+}
+
+# Set Docker host to Colima's socket for seamless Docker CLI usage with Colima
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+export DOCKER_CONTEXT="colima"
+
+aws-list-stacks() {
+ aws cloudformation list-stacks --region us-west-2 --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_COMPLETE_CLEANUP_IN_PROGRESS --query 'StackSummaries[?contains(StackName, `cost-of-goods`)].{Name:StackName,Status:StackStatus,LastUpdated:LastUpdatedTime}' --output table
+}
+
+# Function to restart Colima and ensure Docker CLI continues to work with the new socket
+crestart() {
+  colima stop && colima start
+}
+
+# [Headroom](https://github.com/headroomlabs-ai/headroom) - 60–95% fewer tokens · library · proxy · MCP · content-aware compressors · local-first · reversible
+export HEADROOM_PROXY_CMD="headroom proxy --port 8787"
+export HEADROOM_PROXY_URL="http://127.0.0.1:8787"
+
+run-ai() {
+    local agent="$1"
+    local headroom_bin
+    shift || true
+
+    if [ -z "$agent" ]; then
+        echo "Usage: run-ai <agent> [args...]"
+        return 1
+    fi
+
+    headroom_bin="$(command -v headroom 2>/dev/null || true)"
+    if [ -z "$headroom_bin" ] && command -v pyenv >/dev/null 2>&1; then
+        headroom_bin="$(pyenv which headroom 2>/dev/null || true)"
+    fi
+
+    if [ -z "$headroom_bin" ]; then
+        echo "headroom command not found in PATH/pyenv"
+        return 127
+    fi
+
+    # ANTHROPIC_MODEL="${ANTHROPIC_MODEL}" \
+    case "$agent" in
+        claude)
+            # ANTHROPIC_TARGET_API_URL tells the headroom proxy which upstream to forward to.
+            # Without it, wrap defaults to api.anthropic.com — which rejects corporate tokens.
+            ANTHROPIC_TARGET_API_URL="${ANTHROPIC_BASE_URL}" \
+            ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-$GOCODE_API_TOKEN}" \
+            command "$headroom_bin" wrap claude -- "$@"
+            ;;
+        *)
+            command "$headroom_bin" wrap "$agent" -- "$@"
+            ;;
+    esac
+}
+
+alias claude='run-ai claude'
+
 # enable run terminal at x86 for specific applications
 run-terminal-x86() {
     arch -x86_64 zsh
@@ -156,6 +382,13 @@ convert-video-to-gif() {
     local inputVideo=$1
     
     ffmpeg -i "$inputVideo" -vf "fps=60,scale=1046:-1:flags=lanczos,mpdecimate" -c:v gif "$inputVideo.gif"
+}
+
+convert-video-to-mp3() {
+    local inputVideo=$1
+    local outputAudio=$2
+    
+    ffmpeg -i "$inputVideo" -vn -acodec libmp3lame -q:a 2 "$outputAudio"
 }
 
 convert-image() {
@@ -210,6 +443,22 @@ buf() {
     filename="${1}"
     filetime=$(date +%Y%m%d_%H%M%S)
     cp -a "${filename}" "${filename}_${filetime}"
+}
+
+backup-folder() {
+    # ARGS: 1 (Required) - Path to folder
+    # DESC: Creates a backup of the specified folder with a timestamp.
+    
+    if [ -d "$1" ]; then
+        local foldername
+        local foldertime
+        
+        foldername="${1}"
+        foldertime=$(date +%Y%m%d_%H%M%S)
+        cp -a "${foldername}" "${foldername}_${foldertime}"
+    else
+        printf "Directory not found: %s\n" "$1"
+    fi
 }
 
 # Prints URL of current git repository

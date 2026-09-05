@@ -6,6 +6,14 @@ export PATH="$HOME/bin:$PATH";
 # Pipx
 export PATH="$PATH:/Users/carlohcs/.local/bin"
 
+# Skip heavy prompt/plugins in VS Code automation-like terminals
+if [[ -n "$VSCODE_GIT_IPC_HANDLE" ]] || [[ "$TERM_PROGRAM" == "vscode" ]]; then
+  export STARSHIP_SHELL=""
+  export DISABLE_AUTO_TITLE="true"
+  # return early keeps shell minimal for tooling
+  return
+fi
+
 # asdf
 . /opt/homebrew/opt/asdf/libexec/asdf.sh
 
@@ -24,6 +32,9 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+# https://github.com/allenk/GeminiWatermarkTool
+export VCPKG_ROOT="$HOME/Documents/repository/vcpkg"
 
 # Starship
 # export STARSHIP_CONFIG=~/.dotfiles/starship.toml
@@ -87,3 +98,12 @@ complete -W "NSGlobalDomain" defaults;
 
 # Add `killall` tab completion for common apps
 complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes SystemUIServer Terminal Twitter" killall;
+
+# # echo "Forçando configuração global do ccstatusline..."
+# CONFIG_PATH="$HOME/Documents/repository/dotfiles/ai/tools/ccstatusline-config.json"
+
+# if [ -f "$CONFIG_PATH" ]; then
+#     export CCSTATUSLINE_CONFIG="$CONFIG_PATH"
+# else
+#     echo "Aviso: Arquivo $CONFIG_PATH não encontrado. Verifique o caminho."
+# fi

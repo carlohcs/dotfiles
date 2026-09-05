@@ -1,0 +1,116 @@
+{
+  "version": 3,
+  "lines": [
+    [
+      {
+        "id": "1",
+        "type": "model",
+        "color": "brightCyan",
+        "merge": true
+      },
+      {
+        "id": "2699fa06-1140-40fd-89ab-93a3e14a2655",
+        "type": "thinking-effort",
+        "color": "brightMagenta"
+      },
+      {
+        "id": "3153f5b5-b3bb-4310-b9ef-4156e57bb970",
+        "type": "context-bar",
+        "color": "brightBlue",
+        "metadata": {
+          "display": "slider"
+        }
+      },
+      {
+        "id": "5",
+        "type": "git-branch",
+        "color": "brightGreen",
+        "merge": true
+      },
+      {
+        "id": "7",
+        "type": "git-changes",
+        "color": "brightYellow"
+      }
+    ],
+    [
+      {
+        "id": "96913093-f920-4dbb-89f2-10dd4345ac66",
+        "type": "custom-symbol",
+        "customSymbol": "."
+      }
+    ],
+    [
+      {
+        "id": "cbe4241a-be88-46b8-b36f-c4236be7a57f",
+        "type": "session-usage",
+        "metadata": {
+          "display": "slider"
+        }
+      },
+      {
+        "id": "989b63af-2d6b-41f6-898e-49109d773a03",
+        "type": "weekly-usage",
+        "metadata": {
+          "display": "slider"
+        }
+      },
+      {
+        "id": "056131e3-8fee-431d-b66c-e728eb929e3d",
+        "type": "skills",
+        "color": "brightMagenta",
+        "metadata": {
+          "mode": "list"
+        }
+      }
+    ],
+    [
+      {
+        "id": "617fced1-9f6a-4235-8386-71f40ac6f386",
+        "type": "reset-timer",
+        "color": "brightCyan",
+        "rawValue": true,
+        "metadata": {
+          "compact": "false"
+        }
+      },
+      {
+        "id": "00d2f889-f067-40d6-8364-0987439db857",
+        "type": "weekly-reset-timer",
+        "color": "brightCyan",
+        "rawValue": true
+      }
+    ],
+    [
+      {
+        "id": "c948b582-257e-422e-b28d-4e69604d81d0",
+        "type": "custom-text",
+        "customText": "."
+      }
+    ]
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "defaultPadding": " ",
+  "defaultPaddingSide": "both",
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "gitCacheTtlSeconds": 5,
+  "minimalistMode": false,
+  "powerline": {
+    "enabled": true,
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [],
+    "endCaps": [],
+    "theme": "custom",
+    "autoAlign": true,
+    "continueThemeAcrossLines": true
+  },
+  "exportedBy": "2.2.27"
+}
