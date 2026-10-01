@@ -342,14 +342,34 @@ run-ai() {
         return 127
     fi
 
-    # ANTHROPIC_MODEL="${ANTHROPIC_MODEL}" \
     case "$agent" in
         claude)
-            # ANTHROPIC_TARGET_API_URL tells the headroom proxy which upstream to forward to.
-            # Without it, wrap defaults to api.anthropic.com — which rejects corporate tokens.
+            # Uso corporativo padrão
             ANTHROPIC_TARGET_API_URL="${ANTHROPIC_BASE_URL}" \
             ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-$GOCODE_API_TOKEN}" \
             command "$headroom_bin" wrap claude -- "$@"
+            ;;
+        claude-local)
+            # 1. Verifica se o fcc-server está a responder
+            if ! curl -s http://127.0.0.1:8082 > /dev/null; then
+                echo "🚀 A iniciar o fcc-server em segundo plano..."
+                fcc-server > /tmp/fcc-server.log 2>&1 &
+                sleep 2 
+                
+                if command -v open >/dev/null; then
+                    open "http://127.0.0.1:8082/admin"
+                elif command -v xdg-open >/dev/null; then
+                    xdg-open "http://127.0.0.1:8082/admin"
+                fi
+            else
+                echo "✅ fcc-server já está em execução."
+            fi
+
+            # 2. Chama o executável original do claude diretamente (contornando o headroom)
+            # Usamos ANTHROPIC_BASE_URL (nativo do Claude) em vez de ANTHROPIC_TARGET_API_URL
+            ANTHROPIC_BASE_URL="http://127.0.0.1:8082" \
+            ANTHROPIC_AUTH_TOKEN="freecc" \
+            command claude "$@"
             ;;
         *)
             command "$headroom_bin" wrap "$agent" -- "$@"
@@ -358,6 +378,14 @@ run-ai() {
 }
 
 alias claude='run-ai claude'
+alias claude-local='run-ai claude-local'
+alias gemini-local="aider --model gemini/gemini-3.6-flash --no-auto-commits"
+
+alias check-ai-models='llmfit'
+
+# DOCKER
+alias docker-prune='docker system prune -a'
+alias docker-df='docker system df'
 
 # enable run terminal at x86 for specific applications
 run-terminal-x86() {

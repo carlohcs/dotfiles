@@ -108,5 +108,20 @@ else
     echo "Aviso: Arquivo $CONFIG_PATH não encontrado. Verifique o caminho."
 fi
 
+
+# ------------------------------------------------------------------------------
+# 6. LLMFIT (Otimização e Ajuste Fino de Modelos)
+# https://github.com/AlexsJones/llmfit
+# ------------------------------------------------------------------------------
+echo -e "\n[6/5] Configurando LLMFIT..."
+if ! command -v llmfit &> /dev/null; then
+    # Assumindo que a instalação é feita via pip, siga este padrão:
+    pip install llmfit
+    echo "LLMFIT instalado."
+else
+    echo "LLMFIT já está instalado."
+fi
+
+
 # ==============================================================================
 echo -e "\n✅ Instalação concluída! Execute 'source ~/.zshrc' ou abra um novo terminal para aplicar."
