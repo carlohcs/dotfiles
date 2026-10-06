@@ -111,14 +111,14 @@ clean-aws-current-session() {
     unset AWS_DEFAULT_PROFILE
     unset AWS_REGION
     unset AWS_DEFAULT_REGION
-
+    
     # Remove SSO and CLI cache
     rm -rf ~/.aws/sso/cache/
     rm -rf ~/.aws/cli/cache/
-
+    
     # Remove aws-okta-processor cache
     rm -rf ~/.aws-okta-processor/
-
+    
     # Clean session tokens from credentials file while preserving personal credentials
     if [ -f ~/.aws/credentials ]; then
         # Create backup before cleaning
@@ -127,7 +127,7 @@ clean-aws-current-session() {
         sed -i.bak '/aws_session_token/d; /aws_access_key_id.*ASIA/d; /aws_secret_access_key.*[A-Za-z0-9+/]\{32,\}/d' ~/.aws/credentials 2>/dev/null
         echo "✓ AWS session tokens removed from credentials (personal credentials preserved)"
     fi
-
+    
     if [ -d ~/.aws/boto ]; then
         echo "  ✓ ~/.aws/boto directory exists"
         # Create backup before cleaning
@@ -135,25 +135,25 @@ clean-aws-current-session() {
         rm -rf ~/.aws/boto/cache/ 2>/dev/null || true
         echo "  ✓ Boto cache cleared (backup created)"
     fi
-
+    
     # Clear any session tokens from config file
     if [ -f ~/.aws/config ]; then
         # Remove any lines containing session tokens or temporary credentials
         sed -i.bak '/aws_session_token/d; /aws_access_key_id.*ASIA/d; /aws_secret_access_key.*temp/d' ~/.aws/config 2>/dev/null
         echo "✓ AWS session tokens removed from config"
     fi
-
+    
     # Try to logout from SSO sessions
     aws sso logout 2>/dev/null || true
-
+    
     # Clear any potential session files in temp directories
     rm -rf /tmp/aws-* 2>/dev/null || true
     rm -rf ~/Library/Caches/aws-cli/ 2>/dev/null || true
-
+    
     # Clear Docker context if using AWS credentials there
     unset AWS_SHARED_CREDENTIALS_FILE
     unset AWS_CONFIG_FILE
-
+    
     echo "✓ AWS Session Completely Cleaned"
     echo "✓ Personal credentials preserved (only session tokens removed)"
     echo "✓ Credentials backed up as safety measure"
@@ -171,7 +171,7 @@ restore-aws-credentials() {
     else
         echo "✗ No AWS credentials backup found"
     fi
-
+    
     # Restore Boto Cache
     local latest_boto_backup=$(ls -td ~/.aws/boto.backup.* 2>/dev/null | head -n 1)
     if [ -n "$latest_boto_backup" ]; then
@@ -193,14 +193,14 @@ clean-aws-tokens-only() {
         rm -f ~/.aws/credentials.tmp 2>/dev/null
         echo "✓ Session tokens removed from credentials"
     fi
-
+    
     # Clean session tokens from config file
     if [ -f ~/.aws/config ]; then
         sed -i.tmp '/aws_session_token/d; /aws_access_key_id.*ASIA/d' ~/.aws/config 2>/dev/null
         rm -f ~/.aws/config.tmp 2>/dev/null
         echo "✓ Session tokens removed from config"
     fi
-
+    
     # Clear environment variables
     unset AWS_SESSION_TOKEN
     unset AWS_ACCESS_KEY_ID
@@ -260,11 +260,11 @@ alias set-gdp-kubeconfig-dev-env='aws eks update-kubeconfig --region us-west-2 -
 alias set-gdp-kubeconfig-test-env='aws eks update-kubeconfig --region us-west-2 --name eks-test-1-30'
 alias set-gdp-kubeconfig-prod-env='aws eks update-kubeconfig --region us-west-2 --name eks-prod-1-30'
 
-get-hermes-pods() { 
-    kubectl get pods --namespace gdp | grep 'hermes' 
+get-hermes-pods() {
+    kubectl get pods --namespace gdp | grep 'hermes'
 }
-connect-hermes-pod() { 
-    kubectl exec -it --namespace gdp $(kubectl get pods --namespace gdp | grep 'hermes' | awk '{print $1}') -- /bin/bash 
+connect-hermes-pod() {
+    kubectl exec -it --namespace gdp $(kubectl get pods --namespace gdp | grep 'hermes' | awk '{print $1}') -- /bin/bash
 }
 
 # NPM
@@ -310,12 +310,12 @@ export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 export DOCKER_CONTEXT="colima"
 
 aws-list-stacks() {
- aws cloudformation list-stacks --region us-west-2 --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_COMPLETE_CLEANUP_IN_PROGRESS --query 'StackSummaries[?contains(StackName, `cost-of-goods`)].{Name:StackName,Status:StackStatus,LastUpdated:LastUpdatedTime}' --output table
+    aws cloudformation list-stacks --region us-west-2 --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_COMPLETE_CLEANUP_IN_PROGRESS --query 'StackSummaries[?contains(StackName, `cost-of-goods`)].{Name:StackName,Status:StackStatus,LastUpdated:LastUpdatedTime}' --output table
 }
 
 # Function to restart Colima and ensure Docker CLI continues to work with the new socket
 crestart() {
-  colima stop && colima start
+    colima stop && colima start
 }
 
 # [Headroom](https://github.com/headroomlabs-ai/headroom) - 60–95% fewer tokens · library · proxy · MCP · content-aware compressors · local-first · reversible
@@ -326,54 +326,54 @@ run-ai() {
     local agent="$1"
     local headroom_bin
     shift || true
-
+    
     if [ -z "$agent" ]; then
         echo "Usage: run-ai <agent> [args...]"
         return 1
     fi
-
+    
     headroom_bin="$(command -v headroom 2>/dev/null || true)"
     if [ -z "$headroom_bin" ] && command -v pyenv >/dev/null 2>&1; then
         headroom_bin="$(pyenv which headroom 2>/dev/null || true)"
     fi
-
+    
     if [ -z "$headroom_bin" ]; then
         echo "headroom command not found in PATH/pyenv"
         return 127
     fi
-
+    
     case "$agent" in
         claude)
             # Uso corporativo padrão
             ANTHROPIC_TARGET_API_URL="${ANTHROPIC_BASE_URL}" \
             ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-$GOCODE_API_TOKEN}" \
             command "$headroom_bin" wrap claude -- "$@"
-            ;;
+        ;;
         claude-local)
             # 1. Verifica se o fcc-server está a responder
             if ! curl -s http://127.0.0.1:8082 > /dev/null; then
                 echo "🚀 A iniciar o fcc-server em segundo plano..."
                 fcc-server > /tmp/fcc-server.log 2>&1 &
-                sleep 2 
+                sleep 2
                 
                 if command -v open >/dev/null; then
                     open "http://127.0.0.1:8082/admin"
-                elif command -v xdg-open >/dev/null; then
+                    elif command -v xdg-open >/dev/null; then
                     xdg-open "http://127.0.0.1:8082/admin"
                 fi
             else
                 echo "✅ fcc-server já está em execução."
             fi
-
+            
             # 2. Chama o executável original do claude diretamente (contornando o headroom)
             # Usamos ANTHROPIC_BASE_URL (nativo do Claude) em vez de ANTHROPIC_TARGET_API_URL
             ANTHROPIC_BASE_URL="http://127.0.0.1:8082" \
             ANTHROPIC_AUTH_TOKEN="freecc" \
             command claude "$@"
-            ;;
+        ;;
         *)
             command "$headroom_bin" wrap "$agent" -- "$@"
-            ;;
+        ;;
     esac
 }
 
@@ -543,8 +543,33 @@ if [[ ${OSTYPE} == "darwin"* ]]; then # Only load these on a MacOS computer
         # USAGE: f [path]
         open -a "Finder" "${1:-.}"
     }
-
+    
     intellij() {
         open -na "IntelliJ IDEA.app" --args "$@"
+    }
+    
+    create-global-link() {
+        if [[ -z "$1" ]]; then
+            echo "Usage: create-global-link <file-path> [link-name]"
+            return 1
+        fi
+        
+        # Get the absolute path of the file
+        local target_file=$(realpath "$1")
+        
+        # If you don't pass a second parameter, use the file's own name
+        local link_name=${2:-$(basename "$target_file")}
+        local bin_dir="$HOME/.local/bin"
+        
+        # Create the folder if it doesn't exist
+        mkdir -p "$bin_dir"
+        
+        # Give execution permission to the original file
+        chmod +x "$target_file"
+        
+        # Create the shortcut (overwriting if it already exists)
+        ln -sf "$target_file" "$bin_dir/$link_name"
+        
+        echo "✅ Shortcut created: $link_name -> $target_file"
     }
 fi

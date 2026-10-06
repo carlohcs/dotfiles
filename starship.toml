@@ -92,12 +92,13 @@ continuation_prompt = "[▸▹ ](dimmed white)"
 format = """
 [┌──](bold purple) $directory$git_branch$git_status [::](bold purple) $time
 [└](bold purple)$cmd_duration[─❯ ](bold purple)"""
-right_format = """(green)($python) (green)(${nodejs}) $battery"""
 
+# O right_format chama o módulo de forma limpa
+right_format = """(green)(${kubernetes}) (green)($python) (green)(${nodejs}) ${battery}"""
 
 [python]
-format = '[\[$symbol$version\][(\[$virtualenv\])](dimmed red)]($style)'
-symbol = '👾 '
+format = '[$symbol$version[(\[$virtualenv\])](dimmed red)]($style)'
+symbol = '🐍 '
 version_format = 'v${raw}'
 pyenv_version_name = false
 
@@ -156,15 +157,22 @@ utc_time_offset = "local"
 style = "dimmed white"
 
 
-
 [battery]
-full_symbol = "🔋"
-charging_symbol = "🔌"
-discharging_symbol = "⚡"
+disabled = false
+
+format = "[- $percentage]($style) "
+
+[[battery.display]]
+threshold = 15
+style = "bold red"
+
+[[battery.display]]
+threshold = 99
+style = "bold yellow"
 
 [[battery.display]]
 threshold = 100
-style = "bold red"
+style = "bold green"
 
 [character]
 error_symbol = "[✖](bold red) "
@@ -195,10 +203,10 @@ format = "[$path]($style)[$lock_symbol]($lock_style)"
 # format = "$all_status$ahead_behind"
 
 
-[julia]
-format = "[$symbol$version]($style) "
-symbol = "ஃ "
-style = "bold green"
+# [julia]
+# format = "[$symbol$version]($style) "
+# symbol = "ஃ "
+# style = "bold green"
 
 [memory_usage]
 format = "$symbol[${ram}( | ${swap})]($style) "
@@ -211,9 +219,9 @@ disabled = true
 
 
 
-[rust]
-format = "[$symbol$version]($style) "
-style = "bold green"
+# [rust]
+# format = "[$symbol$version]($style) "
+# style = "bold green"
 
 
 
@@ -234,3 +242,26 @@ format = "[⬢ $version](bold green)"
 detect_extensions = ["js", "mjs", "cjs", "ts", "tsx"]
 detect_files = ["package.json", ".nvmrc", ".tool-versions"]
 detect_folders = ["node_modules"]
+
+# [kubernetes]
+# disabled = false
+# format = ' [:: ](bold purple)[\(symbol\)context( \($namespace\))]($style)'
+# style = "cyan bold"
+# symbol = "☸ "
+# detect_folders = [".git"]
+
+
+# # TENTATIVA FINAL: Usando grupo de captura posicional e tornando o padrão extremamente permissivo
+
+
+[kubernetes]
+disabled = false
+format = '[☸️  $context](bold blue) '
+
+[[kubernetes.contexts]]
+context_pattern = '^arn:aws:eks:.+:cluster/([^/]+)$'
+context_alias = '$1' 
+
+# Optional: Rename the long default context name to something cleaner
+[kubernetes.context_aliases]
+"colima" = "colima-k8s"
