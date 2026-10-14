@@ -1,109 +1,121 @@
 #!/usr/bin/env bash
 
-# Add `~/bin` to the `$PATH`
-export PATH="$HOME/bin:$PATH";
+# ==========================================
+# BASH PROFILE - Shell secundário
+# O shell principal é o zsh (ver .zshrc). Este arquivo existe
+# para quando algo cai no bash: scripts, `arch -x86_64 bash`,
+# containers e ferramentas que ignoram o $SHELL.
+#
+# Mudança importante: a versão anterior rodava init de zsh
+# (starship init zsh, completion.zsh.inc, pyenv init -) aqui
+# dentro, o que só funcionava por ser sourceado pelo zsh.
+# Agora cada shell inicializa o que é seu.
+#
+# Módulos compartilhados: .exports, .aliases, .functions
+# (.navigation e .warp-config são zsh-only e NÃO entram aqui)
+# ==========================================
 
-# Pipx
-export PATH="$PATH:/Users/carlohcs/.local/bin"
+export DOTFILES="${DOTFILES:-$HOME/Documents/repository/dotfiles}"
 
-# Skip heavy prompt/plugins in VS Code automation-like terminals
-if [[ -n "$VSCODE_GIT_IPC_HANDLE" ]] || [[ "$TERM_PROGRAM" == "vscode" ]]; then
-  export STARSHIP_SHELL=""
-  export DISABLE_AUTO_TITLE="true"
-  # return early keeps shell minimal for tooling
-  return
+[ -r "$HOME/.sensitive_variables" ] && . "$HOME/.sensitive_variables"
+
+# ==========================================
+# MÓDULOS COMPARTILHADOS - Portáveis entre bash e zsh
+# ==========================================
+for _dotfile in exports aliases functions; do
+    [ -r "$DOTFILES/.$_dotfile" ] && . "$DOTFILES/.$_dotfile"
+done
+unset _dotfile
+
+# ==========================================
+# FAST SHELL - Terminais automatizados
+# Mantém o shell mínimo em tasks do VS Code e CI.
+# ==========================================
+if [ -n "$VSCODE_GIT_IPC_HANDLE" ] || [ "$TERM_PROGRAM" = "vscode" ] || [ -n "$CI" ]; then
+    export DOTFILES_FAST_SHELL=1
+    export DISABLE_AUTO_TITLE="true"
 fi
 
-# asdf
-. /opt/homebrew/opt/asdf/libexec/asdf.sh
+# ==========================================
+# BASH OPTIONS - Comportamento do shell
+# Só funcionam no bash; por isso nunca estiveram ativas antes.
+# https://stackoverflow.com/questions/26616003
+# ==========================================
+shopt -s nocaseglob  # glob sem diferenciar maiúsculas
+shopt -s histappend  # anexa ao histórico em vez de sobrescrever
+shopt -s cdspell     # corrige typos em `cd`
+for option in autocd globstar; do
+    shopt -s "$option" 2>/dev/null
+done
+unset option
 
-# Google Cloud SDK
-. ~/google-cloud-sdk/path.zsh.inc
-# Google Cloud SDK (completion)
-. ~/google-cloud-sdk/completion.zsh.inc
+# ==========================================
+# VERSION MANAGERS - Init no dialeto do bash
+# ==========================================
+[ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ] && . /opt/homebrew/opt/asdf/libexec/asdf.sh
 
-# Load known SSH keys
-ssh-add -A 2>/dev/null;
+if command -v pyenv >/dev/null 2>&1; then
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init - bash)"
+fi
 
-# pnpm
-export PNPM_HOME="/Users/carlohcs/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
-
-# https://github.com/allenk/GeminiWatermarkTool
-export VCPKG_ROOT="$HOME/Documents/repository/vcpkg"
-
-# Starship
-# export STARSHIP_CONFIG=~/.dotfiles/starship.toml
-export STARSHIP_CONFIG="/Users/carlohcs/Documents/repository/dotfiles/starship.toml"
-eval "$(starship init zsh)"
-
-# ONLY WORKS FOR BASH
-# https://stackoverflow.com/questions/26616003/shopt-command-not-found-in-bashrc-after-shell-updation
-# # Load the shell dotfiles, and then some:
-# # * ~/.path can be used to extend `$PATH`.
-# # * ~/.extra can be used for other settings you don’t want to commit.
-# for file in ~/.{path,bash_prompt,exports,aliases,functions,extra}; do
-# 	[ -r "$file" ] && [ -f "$file" ] && source "$file";
-# done;
-# unset file;
-
-# Case-insensitive globbing (used in pathname expansion)
-# shopt -s nocaseglob;
-
-# Append to the Bash history file, rather than overwriting it
-# shopt -s histappend;
-
-# Autocorrect typos in path names when using `cd`
-# shopt -s cdspell;
-
-# Enable some Bash 4 features when possible:
-# * `autocd`, e.g. `**/qux` will enter `./foo/bar/baz/qux`
-# * Recursive globbing, e.g. `echo **/*.txt`
-# for option in autocd globstar; do
-# 	shopt -s "$option" 2> /dev/null;
-# done;
-
-# Pyenv
-# Add pyenv ao PATH - this is not needed
-# export PATH="$HOME/.pyenv/bin:$PATH"
-
-# Inicialize pyenv
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-
-# Add tab completion for many Bash commands
-if which brew &> /dev/null && [ -r "$(brew --prefix)/etc/profile.d/bash_completion.sh" ]; then
-	# Ensure existing Homebrew v1 completions continue to work
-	export BASH_COMPLETION_COMPAT_DIR="$(brew --prefix)/etc/bash_completion.d";
-	source "$(brew --prefix)/etc/profile.d/bash_completion.sh";
-elif [ -f /etc/bash_completion ]; then
-	source /etc/bash_completion;
-fi;
-
-# Enable tab completion for `g` by marking it as an alias for `git`
-if type _git &> /dev/null; then
-	complete -o default -o nospace -F _git g;
-fi;
-
-# Add tab completion for SSH hostnames based on ~/.ssh/config, ignoring wildcards
-[ -e "$HOME/.ssh/config" ] && complete -o "default" -o "nospace" -W "$(grep "^Host" ~/.ssh/config | grep -v "[?*]" | cut -d " " -f2- | tr ' ' '\n')" scp sftp ssh;
-
-# Add tab completion for `defaults read|write NSGlobalDomain`
-# You could just use `-g` instead, but I like being explicit
-complete -W "NSGlobalDomain" defaults;
-
-# Add `killall` tab completion for common apps
-complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes SystemUIServer Terminal Twitter" killall;
-
-# # echo "Forçando configuração global do ccstatusline..."
-# CONFIG_PATH="$HOME/Documents/repository/dotfiles/ai/tools/ccstatusline-config.json"
-
-# if [ -f "$CONFIG_PATH" ]; then
-#     export CCSTATUSLINE_CONFIG="$CONFIG_PATH"
-# else
-#     echo "Aviso: Arquivo $CONFIG_PATH não encontrado. Verifique o caminho."
+# ==========================================
+# GOOGLE CLOUD SDK - Versões .bash.inc
+# disabled by now
+# ==========================================
+# [ -f "$HOME/google-cloud-sdk/path.bash.inc" ] && . "$HOME/google-cloud-sdk/path.bash.inc"
+# if [ "$DOTFILES_FAST_SHELL" != "1" ] && [ -f "$HOME/google-cloud-sdk/completion.bash.inc" ]; then
+#     . "$HOME/google-cloud-sdk/completion.bash.inc"
 # fi
+
+# ==========================================
+# COMPLETIONS - Homebrew bash-completion
+# ==========================================
+if command -v brew >/dev/null 2>&1 && [ -r "$(brew --prefix)/etc/profile.d/bash_completion.sh" ]; then
+    export BASH_COMPLETION_COMPAT_DIR="$(brew --prefix)/etc/bash_completion.d"
+    . "$(brew --prefix)/etc/profile.d/bash_completion.sh"
+elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+fi
+
+# ==========================================
+# COMPLETIONS - Regras pontuais
+# `g` herda o completion do git; hosts do ssh vêm do ~/.ssh/config.
+# ==========================================
+if type _git >/dev/null 2>&1; then
+    complete -o default -o nospace -F _git g
+fi
+
+[ -e "$HOME/.ssh/config" ] && complete -o "default" -o "nospace" \
+    -W "$(grep "^Host" ~/.ssh/config | grep -v "[?*]" | cut -d " " -f2- | tr ' ' '\n')" \
+    scp sftp ssh
+
+complete -W "NSGlobalDomain" defaults
+complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes SystemUIServer Terminal Twitter" killall
+
+# ==========================================
+# STARSHIP - Prompt
+# Observação do Warp: o starship pode não renderizar quando
+# o shell padrão é /bin/bash — use o prompt nativo do Warp nesse caso.
+# ==========================================
+if [ "$DOTFILES_FAST_SHELL" != "1" ] && command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+fi
+
+# ==========================================
+# WARPIFY - Blocos do Warp em subshells bash
+# ==========================================
+if [ "$TERM_PROGRAM" = "WarpTerminal" ]; then
+    printf '\eP$f{"hook": "SourcedRcFileForWarp", "value": { "shell": "bash"}}\x9c'
+fi
+
+# ==========================================
+# PRIORIDADE FINAL DE PATH - pipx acima dos shims
+# Precisa vir depois do init de asdf/pyenv.
+# ==========================================
+export PATH="$HOME/.local/bin:$PATH"
+
+# ==========================================
+# PRIVADO - .extra (fora do git)
+# ==========================================
+[ -r "$HOME/.extra" ] && . "$HOME/.extra"
