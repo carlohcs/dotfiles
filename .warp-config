@@ -1,0 +1,138 @@
+#!/usr/bin/env zsh
+
+# ==========================================
+# WARP - Configurações específicas do terminal
+# Só executa quando $TERM_PROGRAM == WarpTerminal,
+# então o arquivo é seguro no iTerm/Terminal/VS Code.
+# ==========================================
+
+# ==========================================
+# WARPIFY SUBSHELLS - Blocos e autocomplete em shells aninhados
+# Sem isto, ao entrar em `docker exec`, `ssh` ou um `zsh` filho,
+# o Warp cai em modo texto puro. O hook abaixo "warpifica"
+# automaticamente, sem precisar clicar no banner.
+# Docs: https://docs.warp.dev/terminal/warpify/subshells
+# ==========================================
+if [[ "$TERM_PROGRAM" == "WarpTerminal" ]]; then
+    printf '\eP$f{"hook": "SourcedRcFileForWarp", "value": { "shell": "zsh"}}\x9c'
+fi
+
+# ==========================================
+# WARP - Diretórios de configuração local
+# themes:   ~/.warp/themes
+# workflows: ~/.warp/workflows (ou .warp/workflows na raiz do repo)
+# ==========================================
+export WARP_HOME="$HOME/.warp"
+export WARP_THEMES_DIR="$WARP_HOME/themes"
+export WARP_WORKFLOWS_DIR="$WARP_HOME/workflows"
+
+# ==========================================
+# WARP - Preferências (macOS usa `defaults`, não JSON)
+# Ex.: desabilitar comandos in-band em sessões remotas
+#   defaults write dev.warp.Warp-Stable DisableInBandCommands -string true
+# No Linux o arquivo é ~/.config/warp-terminal/user_preferences.json
+# ==========================================
+alias warp-prefs-read='defaults read dev.warp.Warp-Stable'
+alias warp-prefs-dir='open "$WARP_HOME"'
+
+# ==========================================
+# WARP - Versionar workflows e temas no dotfiles
+# Cria symlinks de ~/.warp/{workflows,themes} para o repositório,
+# assim seus workflows YAML entram no git junto com o resto.
+# Uso: warp-link-dotfiles
+# ==========================================
+warp-link-dotfiles() {
+    local src_workflows="$DOTFILES/warp/workflows"
+    local src_themes="$DOTFILES/warp/themes"
+
+    mkdir -p "$src_workflows" "$src_themes" "$WARP_HOME"
+
+    local pair src dest
+    for pair in "$src_workflows:$WARP_WORKFLOWS_DIR" "$src_themes:$WARP_THEMES_DIR"; do
+        src="${pair%%:*}"
+        dest="${pair##*:}"
+
+        if [[ -L "$dest" ]]; then
+            echo "• já linkado: $dest"
+        elif [[ -d "$dest" ]]; then
+            echo "⚠️  $dest existe como pasta real. Mova o conteúdo para $src e rode de novo."
+        else
+            ln -s "$src" "$dest" && echo "✓ $dest -> $src"
+        fi
+    done
+}
+
+# ==========================================
+# WARP - Temas da comunidade
+# https://github.com/warpdotdev/themes
+# Uso: warp-install-themes
+# ==========================================
+warp-install-themes() {
+    local tmp
+    tmp=$(mktemp -d) || return 1
+    mkdir -p "$WARP_THEMES_DIR"
+    git clone --depth 1 https://github.com/warpdotdev/themes "$tmp/themes" &&
+        cp -R "$tmp/themes"/*/*.yaml "$WARP_THEMES_DIR"/ 2>/dev/null
+    rm -rf "$tmp"
+    echo "✓ Temas copiados para $WARP_THEMES_DIR (Settings > Appearance > Themes)"
+}
+
+# ==========================================
+# WARP - Novo workflow YAML
+# Workflows são aliases parametrizados e pesquisáveis
+# (Ctrl-Shift-R). Bom destino para os aliases longos daqui.
+# Uso: warp-new-workflow deploy-hermes
+# ==========================================
+warp-new-workflow() {
+    local name="$1"
+    [[ -z "$name" ]] && { echo "Uso: warp-new-workflow <nome>"; return 1; }
+
+    local dir="${WARP_WORKFLOWS_DIR}"
+    mkdir -p "$dir"
+    local file="$dir/${name}.yaml"
+
+    cat >"$file" <<EOF
+---
+name: ${name}
+command: |-
+  echo "{{argumento}}"
+tags:
+  - dotfiles
+description: Descreva o que este workflow faz
+arguments:
+  - name: argumento
+    description: Valor de entrada
+    default_value: ""
+EOF
+
+    "$EDITOR" "$file"
+}
+
+# ==========================================
+# WARP - Comportamento do shell dentro do Warp
+# O Warp já tem autocomplete, histórico e sugestões próprias,
+# então plugins de autosuggestion/syntax-highlight só gastam
+# tempo de startup e brigam com o editor de input.
+# ==========================================
+if [[ "$TERM_PROGRAM" == "WarpTerminal" ]]; then
+    export DOTFILES_SKIP_ZSH_AUTOSUGGESTIONS=1
+    export DOTFILES_SKIP_ZSH_SYNTAX_HIGHLIGHTING=1
+fi
+
+# ==========================================
+# WARP - Prompt
+# O starship fica ativo no Warp por padrão (ver .bootstrap).
+# Requer Settings > Appearance > Input > Input Type > Shell (PS1)
+# (ou "Honor user's custom prompt (PS1)" em Settings > Features).
+# Para usar o prompt nativo do Warp (context chips):
+#   export DOTFILES_STARSHIP_IN_WARP=0 no ~/.sensitive_variables
+# Obs.: a integração de shell do iTerm2 quebra o prompt custom no Warp.
+# ==========================================
+
+# ==========================================
+# WARP - SSH como subshell
+# O wrapper SSH legado não suporta tmux. A alternativa oficial:
+# Settings > Warpify > Subshells > Added commands -> adicione `command ssh`
+# e conecte com: command ssh usuario@servidor
+# ==========================================
+alias ssh-warp='command ssh'
