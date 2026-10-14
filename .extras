@@ -1,0 +1,174 @@
+#!/usr/bin/env zsh
+
+# ==========================================
+# EXTRAS - Catálogo de ferramentas opcionais
+# TUDO aqui está comentado de propósito.
+# Descomente só o que for usar — cada linha extra
+# custa milissegundos na abertura do terminal.
+# Medir antes de otimizar:  time zsh -i -c exit
+# ==========================================
+
+# ==========================================
+# ZOXIDE - https://github.com/ajeetdsouza/zoxide
+# Já ativo em `.navigation`. Deixado aqui como referência.
+# brew install zoxide
+# eval "$(zoxide init zsh --cmd cd)"
+# ==========================================
+
+# ==========================================
+# EZA - https://github.com/eza-community/eza
+# Substituto moderno do `ls`: ícones, git status e árvore.
+# Já é usado automaticamente pelo hook de listagem se existir.
+# brew install eza
+alias ls='eza -lh --git --group-directories-first --icons=auto'
+alias ll='eza -lah --git --group-directories-first --icons=auto'
+alias lt='eza --tree --level=2 --icons=auto'
+# ==========================================
+
+# ==========================================
+# FD - https://github.com/sharkdp/fd
+# Substituto do `find`, respeita .gitignore. Alimenta o fzf.
+# brew install fd
+# alias find-files='fd'
+# ==========================================
+
+# ==========================================
+# RIPGREP - https://github.com/BurntSushi/ripgrep
+# Grep recursivo rápido. Complementa o `fgr` do fsearch
+# quando você quer buscar só dentro do projeto atual.
+# brew install ripgrep
+# alias rgf='rg --files-with-matches'
+# ==========================================
+
+# ==========================================
+# ATUIN - https://github.com/atuinsh/atuin
+# Histórico de shell em SQLite, com busca fuzzy, contexto
+# (pasta, host, exit code) e sync E2E entre máquinas.
+# Atenção no Warp: desative o keybinding de Ctrl-R para não
+# brigar com a busca nativa (`--disable-up-arrow` ajuda).
+# brew install atuin
+# eval "$(atuin init zsh --disable-up-arrow)"
+# ==========================================
+
+# ==========================================
+# DIRENV - https://github.com/direnv/direnv
+# Carrega/descarrega variáveis por diretório via `.envrc`.
+# Resolve o vaivém de AWS_PROFILE e tokens por projeto.
+# brew install direnv
+# eval "$(direnv hook zsh)"
+# ==========================================
+
+# ==========================================
+# MISE - https://github.com/jdx/mise
+# Substitui asdf + pyenv + nvm + proto em um binário só,
+# muito mais rápido no startup. Candidato a consolidar
+# os 4 version managers que convivem hoje no `.bootstrap`.
+# brew install mise
+# eval "$(mise activate zsh)"
+# ==========================================
+
+# ==========================================
+# ZSH-DEFER - https://github.com/romkatv/zsh-defer
+# Adia a inicialização de coisas lentas (conda, gcloud,
+# completions) para depois do primeiro prompt aparecer.
+# git clone https://github.com/romkatv/zsh-defer ~/.zsh-defer
+# source ~/.zsh-defer/zsh-defer.plugin.zsh
+# zsh-defer source ~/google-cloud-sdk/completion.zsh.inc
+# ==========================================
+
+# ==========================================
+# FZF-TAB - https://github.com/Aloxaf/fzf-tab
+# Troca o menu de completion do zsh por uma janela fzf.
+# Obs.: pode conflitar com o autocomplete nativo do Warp —
+# teste antes de fixar.
+# git clone https://github.com/Aloxaf/fzf-tab ~/.fzf-tab
+# source ~/.fzf-tab/fzf-tab.plugin.zsh
+# ==========================================
+
+# ==========================================
+# DELTA - https://github.com/dandavison/delta
+# Diff de git com syntax highlight e side-by-side.
+# brew install git-delta
+# git config --global core.pager delta
+# git config --global delta.navigate true
+# ==========================================
+
+# ==========================================
+# LAZYGIT - https://github.com/jesseduffield/lazygit
+# TUI de git. Rebase interativo e stash sem decorar comando.
+# brew install lazygit
+# alias lg='lazygit'
+# ==========================================
+
+# ==========================================
+# LAZYDOCKER - https://github.com/jesseduffield/lazydocker
+# TUI de containers. Combina bem com o setup Colima.
+# brew install lazydocker
+# alias lzd='lazydocker'
+# ==========================================
+
+# ==========================================
+# K9S - https://github.com/derailed/k9s
+# TUI de Kubernetes. Substitui boa parte dos aliases kubectl
+# e dos `get-hermes-pods` / `connect-hermes-pod`.
+# brew install k9s
+# alias k9='k9s --namespace gdp'
+# ==========================================
+
+# ==========================================
+# NAVI - https://github.com/denisidoro/navi
+# Cheatsheet interativo que cola o comando no prompt.
+# Alternativa aos Workflows do Warp quando você sai do Warp.
+# brew install navi
+# eval "$(navi widget zsh)"
+# ==========================================
+
+# ==========================================
+# TEALDEER - https://github.com/tealdeer-rs/tealdeer
+# Cliente rápido do tldr: exemplos práticos em vez de man page.
+# brew install tealdeer
+# alias help='tldr'
+# ==========================================
+
+# ==========================================
+# BTOP - https://github.com/aristocratos/btop
+# Monitor de recursos. Útil para ver o que a VM do Colima come.
+# brew install btop
+alias top='btop'
+# ==========================================
+
+# ==========================================
+# DUST / DUF - https://github.com/bootandy/dust
+#              https://github.com/muesli/duf
+# Uso de disco legível. Bom par com `docker-df`.
+# brew install dust duf
+# alias du='dust'
+# alias df='duf'
+# ==========================================
+
+# ==========================================
+# PAY-RESPECTS - https://github.com/iffse/pay-respects
+# Corrige o último comando digitado errado (sucessor do thefuck).
+# brew install pay-respects
+# eval "$(pay-respects zsh --alias fk)"
+# ==========================================
+
+# ==========================================
+# WARP THEMES - https://github.com/warpdotdev/themes
+# Repositório oficial de temas. Helper pronto em `.warp-config`:
+# warp-install-themes
+# ==========================================
+
+# ==========================================
+# WARP WORKFLOWS - https://github.com/warpdotdev/workflows
+# Specs YAML dos workflows públicos (também em commands.dev).
+# Bons exemplos antes de escrever os seus com `warp-new-workflow`.
+# git clone https://github.com/warpdotdev/workflows /tmp/warp-workflows
+# ==========================================
+
+# ==========================================
+# FSEARCH - https://github.com/noahdunnagan/fsearch
+# Busca de disco inteiro no macOS. Setup e funções
+# (ff, fcd, fgr, fsym, fgit) já estão em `.navigation`.
+# fsearch-setup
+# ==========================================
