@@ -1,0 +1,187 @@
+#!/usr/bin/env zsh
+
+# ==========================================
+# EXPORTS - Variáveis de ambiente e PATH
+# Carregado PRIMEIRO. Nada aqui pode depender
+# de binários instalados por version managers.
+# Ordem de carga: exports -> bootstrap -> aliases
+#                 -> functions -> navigation
+#                 -> warp-config -> extras -> extra
+# ==========================================
+
+# ==========================================
+# HELPERS DE PATH - Evitam duplicação no $PATH
+# Use path_prepend para prioridade alta,
+# path_append para prioridade baixa.
+# ==========================================
+path_prepend() {
+    local dir="$1"
+    [[ -d "$dir" ]] || return 0
+    case ":$PATH:" in
+        *":$dir:"*) ;;
+        *) export PATH="$dir:$PATH" ;;
+    esac
+}
+
+path_append() {
+    local dir="$1"
+    [[ -d "$dir" ]] || return 0
+    case ":$PATH:" in
+        *":$dir:"*) ;;
+        *) export PATH="$PATH:$dir" ;;
+    esac
+}
+
+# ==========================================
+# DOTFILES - Raiz do repositório de configuração
+# Todos os demais arquivos são resolvidos a partir daqui.
+# ==========================================
+export DOTFILES="${DOTFILES:-$HOME/Documents/repository/dotfiles}"
+export REPOSITORY_HOME="${REPOSITORY_HOME:-$HOME/Documents/repository}"
+
+# ==========================================
+# EDITOR - Editor padrão do sistema
+# Atenção: `alias vim=nvim` NÃO afeta $EDITOR,
+# porque aliases não são expandidos por outros programas.
+# Por isso apontamos direto para o binário real.
+# ==========================================
+if command -v nvim >/dev/null 2>&1; then
+    export EDITOR="nvim"
+    export VISUAL="nvim"
+else
+    export EDITOR="vim"
+    export VISUAL="vim"
+fi
+
+# ==========================================
+# LOCALE & PAGER - Idioma e paginação
+# ==========================================
+# LANG basta; LC_ALL sobrescreve TODAS as categorias LC_* de uma vez
+# e costuma quebrar ajustes locais (datas, números) sem avisar.
+export LANG="${LANG:-en_US.UTF-8}"
+export LESS="-R"                       # preserva cores no less
+export MANPAGER="${MANPAGER:-less -R}" # troque por 'bat' se quiser man colorido
+
+# ==========================================
+# HISTÓRICO - Comportamento do histórico do zsh
+# ==========================================
+export HISTSIZE=100000
+export SAVEHIST=100000
+export HISTFILE="$HOME/.zsh_history"
+
+# ==========================================
+# PATH BASE - Diretórios pessoais de binários
+# ==========================================
+path_prepend "$HOME/bin"
+path_prepend "$HOME/.local/bin" # pipx, fsearch, create-global-link
+
+# ==========================================
+# HOMEBREW - Pacotes macOS (Apple Silicon)
+# ==========================================
+path_prepend "/opt/homebrew/bin"
+path_prepend "/opt/homebrew/sbin"
+path_prepend "/opt/homebrew/opt/postgresql@15/bin"
+
+# ==========================================
+# NODE / PNPM / BUN - Runtimes e package managers JS
+# ==========================================
+export PNPM_HOME="$HOME/Library/pnpm"
+path_prepend "$PNPM_HOME"
+
+export BUN_INSTALL="$HOME/.bun"
+path_prepend "$BUN_INSTALL/bin"
+
+# ==========================================
+# PROTO - https://github.com/moonrepo/proto
+# Gerenciador multi-linguagem (shims)
+# ==========================================
+export PROTO_HOME="$HOME/.proto"
+path_prepend "$PROTO_HOME/shims"
+path_prepend "$PROTO_HOME/bin"
+
+# ==========================================
+# RUST / CARGO - Toolchain Rust
+# Necessário também para compilar o fsearch do fonte.
+# ==========================================
+path_prepend "$HOME/.cargo/bin"
+
+# ==========================================
+# VCPKG - https://github.com/allenk/GeminiWatermarkTool
+# Gerenciador de dependências C/C++
+# ==========================================
+export VCPKG_ROOT="$REPOSITORY_HOME/vcpkg"
+
+# ==========================================
+# DOCKER / COLIMA - Runtime de containers
+# Aponta o Docker CLI para o socket do Colima.
+# ==========================================
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+export DOCKER_CONTEXT="colima"
+
+# ==========================================
+# STARSHIP - https://github.com/starship/starship
+# Prompt. O init fica em .bootstrap (precisa do binário no PATH).
+# ==========================================
+export STARSHIP_CONFIG="$DOTFILES/starship.toml"
+
+# ==========================================
+# HEADROOM - https://github.com/headroomlabs-ai/headroom
+# Proxy/MCP que reduz 60-95% dos tokens enviados aos agentes.
+# ==========================================
+export HEADROOM_PROXY_CMD="headroom proxy --port 8787"
+export HEADROOM_PROXY_URL="http://127.0.0.1:8787"
+
+# ==========================================
+# CCSTATUSLINE - Status line do Claude Code
+# ==========================================
+export CCSTATUSLINE_CONFIG="$DOTFILES/ai/tools/ccstatusline-config.json"
+
+# ==========================================
+# LM STUDIO - CLI de modelos locais
+# ==========================================
+path_append "$HOME/.lmstudio/bin"
+
+# ==========================================
+# FSEARCH - https://github.com/noahdunnagan/fsearch
+# Diretório de dados/índice (macOS).
+# As funções de uso ficam em .navigation
+# ==========================================
+export FSEARCH_HOME="$HOME/Library/Application Support/FSearch"
+export FSEARCH_SOCKET="$FSEARCH_HOME/fsearch.sock"
+export FSEARCH_SKIP_FILE="$FSEARCH_HOME/content-skip.txt"
+
+# ==========================================
+# FZF - https://github.com/junegunn/fzf
+# Defaults globais. Integração e keybindings em .navigation
+# ==========================================
+export FZF_DEFAULT_OPTS="
+  --height=60%
+  --layout=reverse
+  --border=rounded
+  --info=inline
+  --cycle
+  --bind=ctrl-u:preview-half-page-up,ctrl-d:preview-half-page-down
+  --bind=ctrl-y:accept
+"
+
+# ==========================================
+# WORKSPACES CORPORATIVOS - GoDaddy / Poynt
+# Valores reais devem vir de `.extra` (fora do git).
+# Definimos fallbacks apenas para não quebrar aliases.
+# ==========================================
+: "${GODADDY_WORKSPACE:=$HOME/Documents/godaddy}"
+: "${GODADDY_POYNT:=$GODADDY_WORKSPACE/poynt}"
+: "${POYNT_KEYS:=$GODADDY_WORKSPACE/keys}"
+export GODADDY_WORKSPACE GODADDY_POYNT POYNT_KEYS
+
+# ==========================================
+# CAPTURAS DE TELA - Destino dos screenshots
+# ==========================================
+export CAPTURE_FOLDER="$HOME/Desktop"
+
+# ==========================================
+# FAST SHELL - Modo leve para terminais automatizados
+# Quando =1, .bootstrap pula prompt/plugins pesados.
+# Detecção automática em .bootstrap (VS Code, CI, etc).
+# ==========================================
+export DOTFILES_FAST_SHELL="${DOTFILES_FAST_SHELL:-0}"
