@@ -1,0 +1,462 @@
+#!/usr/bin/env zsh
+
+# ==========================================
+# FUNCTIONS - Funções de shell
+# Tudo que precisa de argumentos, lógica ou
+# múltiplas linhas. Aliases ficam em `.aliases`.
+# ==========================================
+
+# ==========================================
+# AWS - Limpeza completa de sessão
+# Remove tokens temporários, caches de SSO/boto e
+# variáveis de ambiente, preservando credenciais pessoais.
+# Faz backup antes de qualquer alteração destrutiva.
+# ==========================================
+clean-aws-current-session() {
+    unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+    unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_REGION AWS_DEFAULT_REGION
+
+    rm -rf ~/.aws/sso/cache/
+    rm -rf ~/.aws/cli/cache/
+    rm -rf ~/.aws-okta-processor/
+
+    if [[ -f ~/.aws/credentials ]]; then
+        cp ~/.aws/credentials ~/.aws/credentials.backup.$(date +%Y%m%d_%H%M%S)
+        sed -i.bak '/aws_session_token/d; /aws_access_key_id.*ASIA/d; /aws_secret_access_key.*[A-Za-z0-9+/]\{32,\}/d' ~/.aws/credentials 2>/dev/null
+        echo "✓ Tokens de sessão removidos de ~/.aws/credentials (credenciais pessoais preservadas)"
+    fi
+
+    if [[ -d ~/.aws/boto ]]; then
+        cp -r ~/.aws/boto ~/.aws/boto.backup.$(date +%Y%m%d_%H%M%S)
+        rm -rf ~/.aws/boto/cache/ 2>/dev/null || true
+        echo "✓ Cache do boto limpo (backup criado)"
+    fi
+
+    if [[ -f ~/.aws/config ]]; then
+        sed -i.bak '/aws_session_token/d; /aws_access_key_id.*ASIA/d; /aws_secret_access_key.*temp/d' ~/.aws/config 2>/dev/null
+        echo "✓ Tokens de sessão removidos de ~/.aws/config"
+    fi
+
+    aws sso logout 2>/dev/null || true
+    rm -rf /tmp/aws-* 2>/dev/null || true
+    rm -rf ~/Library/Caches/aws-cli/ 2>/dev/null || true
+    unset AWS_SHARED_CREDENTIALS_FILE AWS_CONFIG_FILE
+
+    echo "✓ Sessão AWS completamente limpa"
+    echo "Nota: pode ser necessário reiniciar o terminal para limpeza total"
+}
+
+# ==========================================
+# AWS - Restauração do último backup
+# Volta credenciais e cache do boto ao estado anterior.
+# ==========================================
+restore-aws-credentials() {
+    local latest_backup
+    latest_backup=$(ls -t ~/.aws/credentials.backup.* 2>/dev/null | head -n 1)
+
+    if [[ -n "$latest_backup" ]]; then
+        cp "$latest_backup" ~/.aws/credentials
+        echo "✓ Credenciais restauradas de: $(basename $latest_backup)"
+        echo "Backups disponíveis:"
+        ls -la ~/.aws/credentials.backup.* 2>/dev/null | awk '{print "  " $9 " (" $6 " " $7 " " $8 ")"}'
+    else
+        echo "✗ Nenhum backup de credenciais encontrado"
+    fi
+
+    local latest_boto_backup
+    latest_boto_backup=$(ls -td ~/.aws/boto.backup.* 2>/dev/null | head -n 1)
+    if [[ -n "$latest_boto_backup" ]]; then
+        rm -rf ~/.aws/boto 2>/dev/null || true
+        cp -r "$latest_boto_backup" ~/.aws/boto
+        echo "✓ Cache do boto restaurado de: $(basename $latest_boto_backup)"
+    else
+        echo "  Nenhum backup de cache do boto encontrado"
+    fi
+}
+
+# ==========================================
+# AWS - Limpeza rápida (sem backup)
+# Só remove tokens temporários dos arquivos e do ambiente.
+# ==========================================
+clean-aws-tokens-only() {
+    echo "🧹 Limpando apenas tokens de sessão AWS..."
+
+    if [[ -f ~/.aws/credentials ]]; then
+        sed -i.tmp '/aws_session_token/d; /aws_access_key_id.*ASIA/d' ~/.aws/credentials 2>/dev/null
+        rm -f ~/.aws/credentials.tmp 2>/dev/null
+        echo "✓ Tokens removidos de credentials"
+    fi
+
+    if [[ -f ~/.aws/config ]]; then
+        sed -i.tmp '/aws_session_token/d; /aws_access_key_id.*ASIA/d' ~/.aws/config 2>/dev/null
+        rm -f ~/.aws/config.tmp 2>/dev/null
+        echo "✓ Tokens removidos de config"
+    fi
+
+    unset AWS_SESSION_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+    echo "✓ Tokens de sessão limpos (credenciais pessoais preservadas)"
+}
+
+# ==========================================
+# AWS - Diagnóstico da sessão atual
+# Mostra variáveis, perfis, sessão ativa e backups.
+# ==========================================
+check-aws-session() {
+    echo "=== Status da Sessão AWS ==="
+
+    printf "\n"; echo "🔧 Variáveis de ambiente:"
+    env | grep -E "^AWS_" | sort || echo "  Nenhuma variável AWS definida"
+
+    printf "\n"; echo "📁 Arquivo de credenciais:"
+    if [[ -f ~/.aws/credentials ]]; then
+        echo "  ✓ ~/.aws/credentials existe"
+        echo "  Perfis:"
+        grep '^\[' ~/.aws/credentials | sed 's/\[//g;s/\]//g;s/^/    /'
+    else
+        echo "  ✗ ~/.aws/credentials não encontrado"
+    fi
+
+    printf "\n"; echo "⚙️  Arquivo de config:"
+    if [[ -f ~/.aws/config ]]; then
+        echo "  ✓ ~/.aws/config existe"
+    else
+        echo "  ✗ ~/.aws/config não encontrado"
+    fi
+
+    printf "\n"; echo "🔐 Sessão atual:"
+    aws sts get-caller-identity 2>/dev/null && echo "  ✓ Sessão AWS ativa" || echo "  ✗ Nenhuma sessão AWS ativa"
+
+    printf "\n"; echo "💾 Backups disponíveis:"
+    if ls ~/.aws/credentials.backup.* >/dev/null 2>&1; then
+        ls -la ~/.aws/credentials.backup.* | awk '{print "  " $9 " (" $6 " " $7 " " $8 ")"}'
+    else
+        echo "  Nenhum backup encontrado"
+    fi
+
+    printf "\n"; echo "==========================="
+}
+
+# ==========================================
+# AWS - CloudFormation
+# Lista stacks ativas relacionadas a cost-of-goods.
+# ==========================================
+aws-list-stacks() {
+    aws cloudformation list-stacks \
+        --region us-west-2 \
+        --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_COMPLETE_CLEANUP_IN_PROGRESS \
+        --query 'StackSummaries[?contains(StackName, `cost-of-goods`)].{Name:StackName,Status:StackStatus,LastUpdated:LastUpdatedTime}' \
+        --output table
+}
+
+# ==========================================
+# KUBERNETES - Pods do Hermes (namespace gdp)
+# ==========================================
+get-hermes-pods() {
+    kubectl get pods --namespace gdp | grep 'hermes'
+}
+
+connect-hermes-pod() {
+    kubectl exec -it --namespace gdp \
+        "$(kubectl get pods --namespace gdp | grep 'hermes' | awk '{print $1}' | head -n 1)" -- /bin/bash
+}
+
+# ==========================================
+# JAVA - Troca de JDK na sessão atual
+# Uso: switch-java 21.0.2  |  switch-java-latest  |  switch-java-17
+# ==========================================
+switch-java() {
+    local version="$1"
+    if [[ -z "$version" ]]; then
+        echo "Uso: switch-java <versão>   (veja com: get-java-versions)"
+        return 1
+    fi
+    export JAVA_HOME="$(/usr/libexec/java_home -v "$version")" && echo "JAVA_HOME=$JAVA_HOME"
+}
+
+switch-java-latest() { switch-java 21.0.2; }
+switch-java-17() { switch-java 17.0.10; }
+
+# ==========================================
+# COLIMA - Setup e ciclo de vida
+# vz + Rosetta + virtiofs é a combinação mais rápida
+# em Apple Silicon para imagens x86.
+# ==========================================
+colima-setup() {
+    colima start \
+        --vm-type=vz \
+        --vz-rosetta \
+        --cpu 6 \
+        --memory 14 \
+        --disk 100 \
+        --mount-type=virtiofs \
+        --save-config
+}
+
+crestart() {
+    colima stop && colima start
+}
+
+# ==========================================
+# AGENTES DE IA - Wrapper headroom
+# Uso: run-ai claude [args] | run-ai claude-local | run-ai <agente>
+# ==========================================
+run-ai() {
+    local agent="$1"
+    local headroom_bin
+    shift || true
+
+    if [[ -z "$agent" ]]; then
+        echo "Uso: run-ai <agente> [args...]"
+        return 1
+    fi
+
+    headroom_bin="$(command -v headroom 2>/dev/null || true)"
+    if [[ -z "$headroom_bin" ]] && command -v pyenv >/dev/null 2>&1; then
+        headroom_bin="$(pyenv which headroom 2>/dev/null || true)"
+    fi
+
+    if [[ -z "$headroom_bin" ]] && [[ "$agent" != "claude-local" ]]; then
+        echo "headroom não encontrado no PATH/pyenv"
+        return 127
+    fi
+
+    case "$agent" in
+    claude)
+        pyenv local 3.14.6 # headroom exige 3.14.6
+        ANTHROPIC_TARGET_API_URL="${ANTHROPIC_BASE_URL}" \
+            ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-$GOCODE_API_TOKEN}" \
+            command "$headroom_bin" wrap claude -- "$@"
+        ;;
+    claude-local)
+        pyenv local 3.14.6
+
+        # Sobe o fcc-server se ainda não estiver respondendo
+        if ! curl -s http://127.0.0.1:8082 >/dev/null; then
+            echo "🚀 Iniciando o fcc-server em segundo plano..."
+            fcc-server >/tmp/fcc-server.log 2>&1 &
+            sleep 2
+
+            if command -v open >/dev/null; then
+                open "http://127.0.0.1:8082/admin"
+            elif command -v xdg-open >/dev/null; then
+                xdg-open "http://127.0.0.1:8082/admin"
+            fi
+        else
+            echo "✅ fcc-server já está em execução."
+        fi
+
+        # Chama o claude direto (contornando o headroom)
+        ANTHROPIC_BASE_URL="http://127.0.0.1:8082" \
+            ANTHROPIC_AUTH_TOKEN="freecc" \
+            command claude "$@"
+        ;;
+    *)
+        command "$headroom_bin" wrap "$agent" -- "$@"
+        ;;
+    esac
+}
+
+# ==========================================
+# TELEGRAM - Teste de bot do OpenClaw
+# ==========================================
+test-telegram-bot() {
+    local bot_token="${1:-$OPEN_CLAW_ASSISTANT_TELEGRAM_BOT_TOKEN}"
+
+    if [[ -z "$bot_token" ]]; then
+        echo "Uso: test-telegram-bot <bot-token>"
+        return 1
+    fi
+
+    curl -s "https://api.telegram.org/bot${bot_token}/getMe"
+}
+
+# ==========================================
+# ARQUITETURA - Shell x86 via Rosetta
+# Útil para ferramentas sem build nativo arm64.
+# ==========================================
+run-terminal-x86() {
+    arch -x86_64 zsh
+}
+
+# ==========================================
+# FFMPEG - Conversão de vídeo
+# https://unix.stackexchange.com/questions/28803
+# h265 + crf 28 é o melhor custo/benefício de tamanho.
+# ==========================================
+convert-video() {
+    local inputVideo="$1"
+    ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 "$inputVideo.mp4"
+}
+
+convert-video-no-audio-removed-frames() {
+    local inputVideo="$1"
+    ffmpeg -i "$inputVideo" -vcodec libx265 -crf 28 -vf mpdecimate,setpts=N/FRAME_RATE/TB "$inputVideo.mp4"
+}
+
+convert-video-to-gif() {
+    local inputVideo="$1"
+    ffmpeg -i "$inputVideo" -vf "fps=60,scale=1046:-1:flags=lanczos,mpdecimate" -c:v gif "$inputVideo.gif"
+}
+
+convert-video-to-mp3() {
+    local inputVideo="$1"
+    local outputAudio="$2"
+    ffmpeg -i "$inputVideo" -vn -acodec libmp3lame -q:a 2 "$outputAudio"
+}
+
+download-m3u8() {
+    local inputM3u8="$1"
+    local outputName="$2"
+    ffmpeg -i "${inputM3u8}" -map p:1 -c:v h264_videotoolbox -b:v 2500k -vf scale=1280:-1 -c:a aac -strict -2 "${outputName}"
+}
+
+# ==========================================
+# IMAGEM - Conversão via sips (nativo macOS)
+# Uso: convert-image foto.png 70
+# ==========================================
+convert-image() {
+    local inputImage="$1"
+    local quality="$2"
+    sips -s format jpeg -s formatOptions "$quality" "$inputImage" --out ./converted-image.jpeg
+}
+
+# ==========================================
+# PROCESSOS - Matar quem ocupa uma porta
+# ==========================================
+kill-port() {
+    local port="$1"
+
+    if [[ -z "$port" ]]; then
+        echo "Uso: kill-port <porta>"
+        return 1
+    fi
+
+    lsof -ti tcp:"$port" | xargs kill -9
+}
+
+# ==========================================
+# ARQUIVOS - Clipboard e backups
+# ==========================================
+copyfile() {
+    if [[ -n "$1" ]] && [[ -f "$1" ]]; then
+        pbcopy <"$1"
+        return 0
+    fi
+    printf "Arquivo não encontrado: %s\n" "$1"
+    return 1
+}
+
+buf() {
+    local filename="$1"
+    local filetime
+    filetime=$(date +%Y%m%d_%H%M%S)
+    cp -a "$filename" "${filename}_${filetime}"
+}
+
+backup-folder() {
+    if [[ -d "$1" ]]; then
+        local foldername="$1"
+        local foldertime
+        foldertime=$(date +%Y%m%d_%H%M%S)
+        cp -a "$foldername" "${foldername}_${foldertime}"
+    else
+        printf "Diretório não encontrado: %s\n" "$1"
+    fi
+}
+
+# ==========================================
+# GIT - URL do repositório atual
+# Uso: gurl [remote]   (padrão: origin)
+# ==========================================
+gurl() (
+    local remote remotename host user_repo
+
+    remotename="${*:-origin}"
+    remote="$(git remote -v | awk '/^'"${remotename}"'.*\(push\)$/ {print $2}')"
+    [[ "${remote}" ]] || return
+    host="$(echo "${remote}" | perl -pe 's/.*@//;s/:.*//')"
+    user_repo="$(echo "${remote}" | perl -pe 's/.*://;s/\.git$//')"
+    echo "https://${host}/${user_repo}"
+)
+
+# ==========================================
+# MACOS - Capturas de tela e integrações
+# ==========================================
+if [[ "$OSTYPE" == darwin* ]]; then
+
+    cap() {
+        screencapture "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    }
+
+    capi() {
+        screencapture -i "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    }
+
+    capiw() {
+        screencapture -i -w "${CAPTURE_FOLDER}/capture-$(date +%Y%m%d_%H%M%S).png"
+    }
+
+    # Abre o Finder no diretório informado (padrão: atual)
+    f() {
+        open -a "Finder" "${1:-.}"
+    }
+
+    intellij() {
+        open -na "IntelliJ IDEA.app" --args "$@"
+    }
+
+    # ==========================================
+    # MACOS - Link global em ~/.local/bin
+    # Uso: create-global-link ./script.sh [nome]
+    # ==========================================
+    create-global-link() {
+        if [[ -z "$1" ]]; then
+            echo "Uso: create-global-link <caminho-do-arquivo> [nome-do-link]"
+            return 1
+        fi
+
+        local target_file
+        target_file=$(realpath "$1")
+
+        local link_name=${2:-$(basename "$target_file")}
+        local bin_dir="$HOME/.local/bin"
+
+        mkdir -p "$bin_dir"
+        chmod +x "$target_file"
+        ln -sf "$target_file" "$bin_dir/$link_name"
+
+        echo "✅ Atalho criado: $link_name -> $target_file"
+    }
+fi
+
+# ==========================================
+# NERD FONT - https://www.nerdfonts.com
+# Instala a fonte que o `eza --icons` e o starship precisam
+# para desenhar ícones (sem ela aparecem lacunas ou quadrados).
+# Uso: nerdfont-setup            -> MesloLGS Nerd Font
+#      nerdfont-setup <cask>     -> outra, ex.: font-fira-code-nerd-font
+# O Warp não pode ser configurado por aqui: depois de instalar,
+# selecione a fonte manualmente (a função imprime o caminho).
+# ==========================================
+nerdfont-setup() {
+    local cask="${1:-font-meslo-lg-nerd-font}"
+
+    command -v brew >/dev/null 2>&1 || { echo "❌ Homebrew não encontrado"; return 1; }
+
+    if brew list --cask "$cask" >/dev/null 2>&1; then
+        echo "✓ $cask já instalada"
+    else
+        echo "⬇️  Instalando $cask..."
+        brew install --cask "$cask" || return 1
+    fi
+
+    echo ""
+    echo "Para ativar:"
+    echo "  1. Warp > Settings > Appearance > Text > Terminal font"
+    echo "     -> escolha 'MesloLGS Nerd Font' (ou a fonte instalada)"
+    echo "  2. Reinicie o Warp se a fonte não aparecer na lista"
+    echo "  3. Abra uma aba nova e teste: ls"
+    echo ""
+    echo "Outros terminais: VS Code -> terminal.integrated.fontFamily = 'MesloLGS Nerd Font'"
+    echo "                  iTerm2  -> Settings > Profiles > Text > Font"
+}
