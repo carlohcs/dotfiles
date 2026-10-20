@@ -1,18 +1,18 @@
 #!/usr/bin/env zsh
 
 # ==========================================
-# EXPORTS - Variáveis de ambiente e PATH
-# Carregado PRIMEIRO. Nada aqui pode depender
-# de binários instalados por version managers.
-# Ordem de carga: exports -> bootstrap -> aliases
-#                 -> functions -> navigation
-#                 -> warp-config -> extras -> extra
+# EXPORTS - Environment variables and PATH
+# Loaded FIRST. Nothing here can depend
+# on binaries installed by version managers.
+# Load order: exports -> bootstrap -> aliases
+#             -> functions -> navigation
+#             -> warp-config -> extras -> extra
 # ==========================================
 
 # ==========================================
-# HELPERS DE PATH - Evitam duplicação no $PATH
-# Use path_prepend para prioridade alta,
-# path_append para prioridade baixa.
+# PATH HELPERS - Avoid duplication in $PATH
+# Use path_prepend for high priority,
+# path_append for low priority.
 # ==========================================
 path_prepend() {
     local dir="$1"
@@ -33,17 +33,17 @@ path_append() {
 }
 
 # ==========================================
-# DOTFILES - Raiz do repositório de configuração
-# Todos os demais arquivos são resolvidos a partir daqui.
+# DOTFILES - Root of the configuration repository
+# Every other file is resolved from here.
 # ==========================================
 export DOTFILES="${DOTFILES:-$HOME/Documents/repository/dotfiles}"
 export REPOSITORY_HOME="${REPOSITORY_HOME:-$HOME/Documents/repository}"
 
 # ==========================================
-# EDITOR - Editor padrão do sistema
-# Atenção: `alias vim=nvim` NÃO afeta $EDITOR,
-# porque aliases não são expandidos por outros programas.
-# Por isso apontamos direto para o binário real.
+# EDITOR - Default system editor
+# Note: `alias vim=nvim` does NOT affect $EDITOR,
+# because aliases aren't expanded by other programs.
+# That's why we point straight at the real binary.
 # ==========================================
 if command -v nvim >/dev/null 2>&1; then
     export EDITOR="nvim"
@@ -54,36 +54,36 @@ else
 fi
 
 # ==========================================
-# LOCALE & PAGER - Idioma e paginação
+# LOCALE & PAGER - Language and paging
 # ==========================================
-# LANG basta; LC_ALL sobrescreve TODAS as categorias LC_* de uma vez
-# e costuma quebrar ajustes locais (datas, números) sem avisar.
+# LANG is enough; LC_ALL overrides ALL LC_* categories at once
+# and tends to silently break local settings (dates, numbers).
 export LANG="${LANG:-en_US.UTF-8}"
-export LESS="-R"                       # preserva cores no less
-export MANPAGER="${MANPAGER:-less -R}" # troque por 'bat' se quiser man colorido
+export LESS="-R"                       # keep colors in less
+export MANPAGER="${MANPAGER:-less -R}" # swap for 'bat' if you want colored man pages
 
 # ==========================================
-# HISTÓRICO - Comportamento do histórico do zsh
+# HISTORY - zsh history behavior
 # ==========================================
 export HISTSIZE=100000
 export SAVEHIST=100000
 export HISTFILE="$HOME/.zsh_history"
 
 # ==========================================
-# PATH BASE - Diretórios pessoais de binários
+# BASE PATH - Personal binary directories
 # ==========================================
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.local/bin" # pipx, fsearch, create-global-link
 
 # ==========================================
-# HOMEBREW - Pacotes macOS (Apple Silicon)
+# HOMEBREW - macOS packages (Apple Silicon)
 # ==========================================
 path_prepend "/opt/homebrew/bin"
 path_prepend "/opt/homebrew/sbin"
 path_prepend "/opt/homebrew/opt/postgresql@15/bin"
 
 # ==========================================
-# NODE / PNPM / BUN - Runtimes e package managers JS
+# NODE / PNPM / BUN - JS runtimes and package managers
 # ==========================================
 export PNPM_HOME="$HOME/Library/pnpm"
 path_prepend "$PNPM_HOME"
@@ -93,58 +93,67 @@ path_prepend "$BUN_INSTALL/bin"
 
 # ==========================================
 # PROTO - https://github.com/moonrepo/proto
-# Gerenciador multi-linguagem (shims)
+# Multi-language manager (shims)
 # ==========================================
 export PROTO_HOME="$HOME/.proto"
 path_prepend "$PROTO_HOME/shims"
 path_prepend "$PROTO_HOME/bin"
 
 # ==========================================
-# RUST / CARGO - Toolchain Rust
-# Necessário também para compilar o fsearch do fonte.
+# RUST / CARGO - Rust toolchain
+# Also needed to compile fsearch from source.
 # ==========================================
 path_prepend "$HOME/.cargo/bin"
 
 # ==========================================
 # VCPKG - https://github.com/allenk/GeminiWatermarkTool
-# Gerenciador de dependências C/C++
+# C/C++ dependency manager
 # ==========================================
 export VCPKG_ROOT="$REPOSITORY_HOME/vcpkg"
 
 # ==========================================
-# DOCKER / COLIMA - Runtime de containers
-# Aponta o Docker CLI para o socket do Colima.
+# DOCKER / COLIMA - Container runtime
+# Points the Docker CLI at Colima's socket.
 # ==========================================
 export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
 export DOCKER_CONTEXT="colima"
 
 # ==========================================
 # STARSHIP - https://github.com/starship/starship
-# Prompt. O init fica em .bootstrap (precisa do binário no PATH).
+# Prompt. Its init lives in .bootstrap (needs the binary in PATH).
 # ==========================================
 export STARSHIP_CONFIG="$DOTFILES/starship.toml"
 
 # ==========================================
 # HEADROOM - https://github.com/headroomlabs-ai/headroom
-# Proxy/MCP que reduz 60-95% dos tokens enviados aos agentes.
+# Proxy/MCP that cuts 60-95% of tokens sent to agents.
+# Two independent instances so personal and work sessions never
+# share context/cache — each profile gets its own port.
+# `run-ai` in .functions picks the right pair via _run-ai-profile.
 # ==========================================
-export HEADROOM_PROXY_CMD="headroom proxy --port 8787"
-export HEADROOM_PROXY_URL="http://127.0.0.1:8787"
+export HEADROOM_PERSONAL_PROXY_CMD="headroom proxy --port 8787"
+export HEADROOM_PERSONAL_PROXY_URL="http://127.0.0.1:8787"
+export HEADROOM_WORK_PROXY_CMD="headroom proxy --port 8788"
+export HEADROOM_WORK_PROXY_URL="http://127.0.0.1:8788"
+
+# Legacy names some tools still read directly; default to personal.
+export HEADROOM_PROXY_CMD="$HEADROOM_PERSONAL_PROXY_CMD"
+export HEADROOM_PROXY_URL="$HEADROOM_PERSONAL_PROXY_URL"
 
 # ==========================================
-# CCSTATUSLINE - Status line do Claude Code
+# CCSTATUSLINE - Claude Code status line
 # ==========================================
 export CCSTATUSLINE_CONFIG="$DOTFILES/ai/tools/ccstatusline-config.json"
 
 # ==========================================
-# LM STUDIO - CLI de modelos locais
+# LM STUDIO - Local models CLI
 # ==========================================
 path_append "$HOME/.lmstudio/bin"
 
 # ==========================================
 # FSEARCH - https://github.com/noahdunnagan/fsearch
-# Diretório de dados/índice (macOS).
-# As funções de uso ficam em .navigation
+# Data/index directory (macOS).
+# Usage functions live in .navigation
 # ==========================================
 export FSEARCH_HOME="$HOME/Library/Application Support/FSearch"
 export FSEARCH_SOCKET="$FSEARCH_HOME/fsearch.sock"
@@ -152,7 +161,7 @@ export FSEARCH_SKIP_FILE="$FSEARCH_HOME/content-skip.txt"
 
 # ==========================================
 # FZF - https://github.com/junegunn/fzf
-# Defaults globais. Integração e keybindings em .navigation
+# Global defaults. Integration and keybindings in .navigation
 # ==========================================
 export FZF_DEFAULT_OPTS="
   --height=60%
@@ -165,9 +174,9 @@ export FZF_DEFAULT_OPTS="
 "
 
 # ==========================================
-# WORKSPACES CORPORATIVOS - GoDaddy / Poynt
-# Valores reais devem vir de `.extra` (fora do git).
-# Definimos fallbacks apenas para não quebrar aliases.
+# CORPORATE WORKSPACES - GoDaddy / Poynt
+# Real values should come from `.extra` (outside git).
+# We only set fallbacks here so aliases don't break.
 # ==========================================
 : "${GODADDY_WORKSPACE:=$HOME/Documents/godaddy}"
 : "${GODADDY_POYNT:=$GODADDY_WORKSPACE/poynt}"
@@ -175,13 +184,13 @@ export FZF_DEFAULT_OPTS="
 export GODADDY_WORKSPACE GODADDY_POYNT POYNT_KEYS
 
 # ==========================================
-# CAPTURAS DE TELA - Destino dos screenshots
+# SCREENSHOTS - Destination for screenshots
 # ==========================================
 export CAPTURE_FOLDER="$HOME/Desktop"
 
 # ==========================================
-# FAST SHELL - Modo leve para terminais automatizados
-# Quando =1, .bootstrap pula prompt/plugins pesados.
-# Detecção automática em .bootstrap (VS Code, CI, etc).
+# FAST SHELL - Lightweight mode for automated terminals
+# When =1, .bootstrap skips the heavy prompt/plugins.
+# Auto-detected in .bootstrap (VS Code, CI, etc).
 # ==========================================
 export DOTFILES_FAST_SHELL="${DOTFILES_FAST_SHELL:-0}"
