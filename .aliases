@@ -1,15 +1,15 @@
 #!/usr/bin/env zsh
 
 # ==========================================
-# ALIASES - Somente atalhos de uma linha
-# Funções foram movidas para `.functions`
-# Aliases de pasta foram movidos para `.navigation`
-# (agora viram named directories + zoxide)
+# ALIASES - One-line shortcuts only
+# Functions were moved to `.functions`
+# Folder aliases were moved to `.navigation`
+# (now named directories + zoxide)
 # ==========================================
 
 # ==========================================
-# NAVEGAÇÃO RELATIVA - Subir níveis de diretório
-# Pular para pastas por nome agora é com zoxide (.navigation)
+# RELATIVE NAVIGATION - Go up directory levels
+# Jumping to folders by name is now zoxide's job (.navigation)
 # ==========================================
 alias ..="cd .."
 alias ...="cd ../.."
@@ -19,7 +19,7 @@ alias ~="cd ~"
 alias -- -="cd -"
 
 # ==========================================
-# EDIÇÃO DE CONFIGURAÇÃO - Abrir dotfiles
+# CONFIG EDITING - Open dotfiles
 # ==========================================
 alias edit-dotfiles='code "$DOTFILES"'
 alias edit-aliases='$EDITOR "$DOTFILES/.aliases"'
@@ -29,12 +29,12 @@ alias edit-navigation='$EDITOR "$DOTFILES/.navigation"'
 alias edit-warp='$EDITOR "$DOTFILES/.warp-config"'
 alias edit-zshrc='$EDITOR "$HOME/.zshrc"'
 alias reload-shell='exec zsh'
-alias update-bashrc='source ~/.zshrc' # mantido por memória muscular
-alias edit-bashrc='edit-aliases'      # idem
+alias update-bashrc='source ~/.zshrc' # kept for muscle memory
+alias edit-bashrc='edit-aliases'      # ditto
 alias edit-hosts='sudo $EDITOR /etc/hosts'
 
 # ==========================================
-# SHORTCUTS - Comandos de uso diário
+# SHORTCUTS - Everyday commands
 # ==========================================
 alias g="git"
 alias vim="nvim"
@@ -42,15 +42,15 @@ alias vi="nvim"
 alias cat="bat"
 
 # ==========================================
-# GREP - Saída sempre colorida
-# `GREP_OPTIONS` foi descontinuado, por isso os aliases.
+# GREP - Always colored output
+# `GREP_OPTIONS` was deprecated, hence the aliases.
 # ==========================================
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
 # ==========================================
-# REDE - Descoberta de IPs
+# NETWORK - IP discovery
 # ==========================================
 alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias localip="ipconfig getifaddr en0"
@@ -58,27 +58,27 @@ alias ips="ifconfig -a | grep -o 'inet6\? \(addr:\)\?\s\?\(\(\([0-9]\+\.\)\{3\}[
 alias flush="dscacheutil -flushcache && killall -HUP mDNSResponder"
 
 # ==========================================
-# GIT - Limpeza de branches
+# GIT - Branch cleanup
 # ==========================================
 alias git-clean-merged-branches="git fetch -p && git branch -vv | awk '/: gone]/{print \$1}' | xargs git branch -D"
 alias git-clean-remove-all-branches="git branch --no-merged | egrep -v '(^\*|master|dev|main|origin)' | xargs git branch -D"
 alias git-clean-branches="git gc --prune=now"
 
 # ==========================================
-# PYTHON - Troca rápida de versão via pyenv
+# PYTHON - Quick version switch via pyenv
 # ==========================================
 alias p3="pyenv global 3.10.4"
 alias p2="pyenv global 2.7.18"
 
 # ==========================================
-# AWS - Credenciais e sessões
+# AWS - Credentials and sessions
 # ==========================================
 alias edit-aws-credentials='$EDITOR ~/.aws/credentials'
 alias aws-ssm='aws ssm start-session --target'
 alias aws-login='rm -rf ~/.aws/boto/cache/* && get-dev-private-instances.sh'
 
 # ==========================================
-# AWS - Perfis gerais
+# AWS - General profiles
 # ==========================================
 alias aws-eu='export AWS_PROFILE=eu-prod'
 alias aws-us='export AWS_PROFILE=us-prod'
@@ -88,14 +88,14 @@ alias aws-local='export AWS_PROFILE=local'
 alias aws-academy='export AWS_PROFILE=academy'
 
 # ==========================================
-# AWS - Perfis do Hermes
+# AWS - Hermes profiles
 # ==========================================
 alias aws-hermes-dev='export AWS_PROFILE=hermes-dev'
 alias aws-hermes-test='export AWS_PROFILE=hermes-test'
 alias aws-hermes-prod='export AWS_PROFILE=hermes-prod'
 
 # ==========================================
-# KUBERNETES - Contextos e clusters EKS
+# KUBERNETES - EKS contexts and clusters
 # ==========================================
 alias set-kubeconfig-local='docker context use desktop-linux && kubectl config use-context docker-desktop'
 alias set-gdp-kubeconfig-dev-env='aws eks update-kubeconfig --region us-west-2 --name eks-dev-1-30'
@@ -104,7 +104,7 @@ alias set-gdp-kubeconfig-prod-env='aws eks update-kubeconfig --region us-west-2 
 alias kubectl-default-context="kubectl config set-context docker-kubernetes"
 
 # ==========================================
-# NPM - Troca de registry por contexto
+# NPM - Switch registry by context
 # ==========================================
 alias npmg='rm -rf ~/.npmrc && cp ${POYNT_KEYS}/.npmrc-godaddy ~/.npmrc'
 alias npmp='rm -rf ~/.npmrc && cp ${POYNT_KEYS}/.npmrc-poynt ~/.npmrc'
@@ -112,19 +112,19 @@ alias npmgshared='rm -rf ~/.npmrc && cp ${POYNT_KEYS}/.npmrc-godaddy-commerce-sh
 alias npmd='echo "registry=https://registry.npmjs.org" > ~/.npmrc'
 
 # ==========================================
-# JAVA - Inspeção de versões instaladas
-# A troca de versão está em `.functions` (switch-java-*)
+# JAVA - Inspect installed versions
+# Version switching lives in `.functions` (switch-java-*)
 # ==========================================
 alias get-java-versions="/usr/libexec/java_home -V"
 
 # ==========================================
-# ANDROID - Captura via adb
+# ANDROID - Capture via adb
 # ==========================================
 alias screenshot-terminal='adb exec-out screencap -p > screenshot.png'
 alias screenrecord-terminal='adbe screenrecord video.mp4'
 
 # ==========================================
-# DOCKER & COLIMA - Containers no macOS
+# DOCKER & COLIMA - Containers on macOS
 # ==========================================
 alias d='docker'
 alias dc='docker compose'
@@ -135,13 +135,13 @@ alias cstop='colima stop'
 alias cstat='colima status && docker ps'
 
 # ==========================================
-# PÓS-GRADUAÇÃO - Projeto food
+# POST-GRADUATE - food project
 # ==========================================
 alias connect-mysql="docker exec -it food-mysqldb-1 /bin/bash"
 
 # ==========================================
-# AGENTES DE IA - Wrappers com headroom
-# A função `run-ai` está em `.functions`
+# AI AGENTS - Wrappers with headroom
+# The `run-ai` function lives in `.functions`
 # ==========================================
 alias claude='run-ai claude'
 alias claude-local='run-ai claude-local'
@@ -150,14 +150,14 @@ alias check-ai-models='llmfit'
 
 # ==========================================
 # AIDER - https://github.com/Aider-AI/aider
-# `--edit-format whole` faz a IA reescrever o arquivo inteiro
-# em vez de usar blocos SEARCH/REPLACE (mais confiável em
-# modelos locais menores, porém gasta mais tokens).
+# `--edit-format whole` makes the AI rewrite the whole file
+# instead of using SEARCH/REPLACE blocks (more reliable on
+# smaller local models, but costs more tokens).
 # ==========================================
 alias aider-local-browser="aider --model ollama_chat/qwen2.5-coder:14b --edit-format whole --no-auto-commits --browser"
 
 # ==========================================
-# OPENCLAW - Ciclo de vida e daemons
+# OPENCLAW - Lifecycle and daemons
 # ==========================================
 alias openclaw-dashboard="openclaw dashboard"
 alias openclaw-start="openclaw gateway start"
@@ -167,14 +167,14 @@ alias openclaw-restart="openclaw gateway restart"
 alias openclaw-status="openclaw gateway status --deep"
 
 # ==========================================
-# OPENCLAW - Diagnóstico e logs
+# OPENCLAW - Diagnostics and logs
 # ==========================================
 alias openclaw-logs="openclaw logs --follow"
 alias openclaw-doctor="openclaw doctor --fix"
 alias openclaw-config="openclaw config show"
 
 # ==========================================
-# OPENCLAW - Gestão de modelos locais e remotos
+# OPENCLAW - Local and remote model management
 # ==========================================
 alias openclaw-models="openclaw models status"
 alias openclaw-models-list="openclaw models list"
@@ -182,32 +182,38 @@ alias openclaw-refresh-models="openclaw models refresh && openclaw gateway resta
 alias openclaw-reset-full="openclaw doctor --fix && openclaw models refresh && openclaw gateway restart"
 
 # ==========================================
-# MACOS - Finder e manutenção
+# MACOS - Finder and maintenance
+# Implementation lives in `.macos` (functions); `macos-defaults`
+# with no args applies every system default in that file.
 # ==========================================
 if [[ "$OSTYPE" == darwin* ]]; then
-    alias cleanup-ds-store="find . -type f -name '*.DS_Store' -ls -delete"
+    alias macos-defaults="$DOTFILES/.macos"
+    alias cleanup-ds-store="$DOTFILES/.macos cleanup-ds-store"
     alias cleanDS="cleanup-ds-store"
-    alias show-finder="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
-    alias hide-finder="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
+    alias show-finder="$DOTFILES/.macos show-finder"
+    alias hide-finder="$DOTFILES/.macos hide-finder"
     alias showHidden='show-finder'
     alias hideHidden='hide-finder'
-    alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder"
-    alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder"
+    alias hidedesktop="$DOTFILES/.macos hidedesktop"
+    alias showdesktop="$DOTFILES/.macos showdesktop"
 
     # ==========================================
-    # MACOS - Clipboard e captura de tela
+    # MACOS - Clipboard and screenshots
+    # `cl` stays here, not in `.macos`: `fc` only sees the calling
+    # shell's own in-memory history, so it can't run from a
+    # separate script process.
     # ==========================================
-    alias cpwd='pwd | tr -d "\n" | pbcopy' # copia o path atual
-    alias cl="fc -e -|pbcopy"              # copia a saída do último comando
-    alias caff="caffeinate -ism"           # roda comando sem deixar o Mac dormir
-    alias capc="screencapture -c"          # tela inteira -> clipboard
-    alias capic="screencapture -i -c"      # seleção -> clipboard
-    alias capiwc="screencapture -i -w -c"  # janela -> clipboard
+    alias cl="fc -e -|pbcopy" # copies the last command's output
+    alias cpwd="$DOTFILES/.macos cpwd"
+    alias caff="$DOTFILES/.macos caff"
+    alias capc="$DOTFILES/.macos capc"
+    alias capic="$DOTFILES/.macos capic"
+    alias capiwc="$DOTFILES/.macos capiwc"
 fi
 
 # ==========================================
-# HTTP - Métodos via lwp-request
-# Gera: GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS
+# HTTP - Methods via lwp-request
+# Generates: GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS
 # ==========================================
 for method in GET HEAD POST PUT DELETE TRACE OPTIONS; do
     alias "${method}"="lwp-request -m '${method}'"

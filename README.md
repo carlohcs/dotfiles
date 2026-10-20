@@ -122,6 +122,7 @@ Keep `.sensitive_variables` and `.extra` in `.gitignore`.
 | Convert a video | `convert-video file.mov` |
 | Symlink a script into `~/.local/bin` | `create-global-link ./script.sh` |
 | Measure shell startup time | `time zsh -i -c exit` |
+| Apply macOS system defaults (Finder, trackpad, Dock, etc.) | `macos-defaults` — runs `.macos`, may prompt for `sudo` and restart some apps |
 
 ---
 

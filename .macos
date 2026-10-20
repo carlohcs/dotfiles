@@ -3,6 +3,67 @@
 # Based on https://github.com/mathiasbynens/dotfiles/blob/main/.macos
 
 ###############################################################################
+# Finder & maintenance functions                                              #
+# Callable individually: $DOTFILES/.macos <function> [args...]               #
+# Aliases in .aliases delegate to these.                                      #
+###############################################################################
+
+cleanup-ds-store() {
+    find . -type f -name '*.DS_Store' -ls -delete
+}
+
+show-finder() {
+    defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder
+}
+
+hide-finder() {
+    defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder
+}
+
+hidedesktop() {
+    defaults write com.apple.finder CreateDesktop -bool false && killall Finder
+}
+
+showdesktop() {
+    defaults write com.apple.finder CreateDesktop -bool true && killall Finder
+}
+
+###############################################################################
+# Clipboard & screenshot functions                                            #
+###############################################################################
+
+cpwd() {
+    pwd | tr -d "\n" | pbcopy # copies the current path
+}
+
+caff() {
+    caffeinate -ism "$@" # runs a command without letting the Mac sleep
+}
+
+capc() {
+    screencapture -c "$@" # whole screen -> clipboard
+}
+
+capic() {
+    screencapture -i -c "$@" # selection -> clipboard
+}
+
+capiwc() {
+    screencapture -i -w -c "$@" # window -> clipboard
+}
+
+###############################################################################
+# Dispatcher                                                                   #
+# With arguments: runs the matching function above and exits, never touching #
+# the defaults below. With no arguments: falls through and applies every     #
+# default in this file (this is what `macos-defaults` in .aliases triggers). #
+###############################################################################
+if [[ $# -gt 0 ]]; then
+    "$@"
+    exit $?
+fi
+
+###############################################################################
 # Trackpad, mouse, keyboard, Bluetooth accessories, and input                 #
 ###############################################################################
 
