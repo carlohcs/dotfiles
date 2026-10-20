@@ -1,19 +1,19 @@
 #!/usr/bin/env zsh
 
 # ==========================================
-# BOOTSTRAP - Inicialização de ferramentas
-# Tudo que precisa rodar `eval`, `source` ou
-# depende de binário já presente no $PATH.
-# Carregado DEPOIS de .exports.
+# BOOTSTRAP - Tooling initialization
+# Everything that needs `eval`, `source` or
+# depends on a binary already present in $PATH.
+# Loaded AFTER .exports.
 # ==========================================
 
 # ==========================================
-# FAST SHELL - Detecção de terminais automatizados
-# VS Code tasks, CI e shells não interativos não precisam
-# de prompt bonito nem de plugins pesados.
-# Diferente da versão antiga, NÃO abortamos o arquivo inteiro:
-# version managers continuam carregando, senão `node`/`python`
-# somem dentro do VS Code.
+# FAST SHELL - Automated terminal detection
+# VS Code tasks, CI and non-interactive shells don't need
+# a fancy prompt or heavy plugins.
+# Unlike the old version, we do NOT abort the whole file:
+# version managers still load, otherwise `node`/`python`
+# disappear inside VS Code.
 # ==========================================
 if [[ -n "$VSCODE_GIT_IPC_HANDLE" ]] || [[ "$TERM_PROGRAM" == "vscode" ]] || [[ -n "$CI" ]]; then
     export DOTFILES_FAST_SHELL=1
@@ -22,7 +22,7 @@ fi
 
 # ==========================================
 # ASDF - https://github.com/asdf-vm/asdf
-# Version manager multi-linguagem
+# Multi-language version manager
 # ==========================================
 if [[ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]]; then
     source /opt/homebrew/opt/asdf/libexec/asdf.sh
@@ -30,7 +30,7 @@ fi
 
 # ==========================================
 # PYENV - https://github.com/pyenv/pyenv
-# Version manager de Python (usado pelo headroom)
+# Python version manager (used by headroom)
 # ==========================================
 if command -v pyenv >/dev/null 2>&1; then
     eval "$(pyenv init --path)"
@@ -38,10 +38,10 @@ if command -v pyenv >/dev/null 2>&1; then
 fi
 
 # ==========================================
-# CONDA - Distribuição Anaconda
-# Bloco gerenciado por `conda init`. Carregado sob demanda
-# em FAST SHELL para não pesar na abertura do terminal.
-# Rode `conda-activate` quando precisar.
+# CONDA - Anaconda distribution
+# Block managed by `conda init`. Loaded on demand
+# in FAST SHELL to avoid weighing down terminal startup.
+# Run `conda-activate` when needed.
 # disabled by now
 # ==========================================
 # _load_conda() {
@@ -68,7 +68,7 @@ fi
 
 # ==========================================
 # GOOGLE CLOUD SDK - gcloud CLI
-# O completion é pesado; pulado em FAST SHELL.
+# Completion is heavy; skipped in FAST SHELL.
 # disabled by now
 # ==========================================
 # if [[ -f "$HOME/google-cloud-sdk/path.zsh.inc" ]]; then
@@ -85,8 +85,8 @@ fi
 [[ -s "$BUN_INSTALL/_bun" ]] && source "$BUN_INSTALL/_bun"
 
 # ==========================================
-# SSH AGENT - Carrega chaves do Keychain
-# `ssh-add -A` foi descontinuado no macOS moderno.
+# SSH AGENT - Loads keys from Keychain
+# `ssh-add -A` has been deprecated on modern macOS.
 # ==========================================
 if [[ "$DOTFILES_FAST_SHELL" != "1" ]] && command -v ssh-add >/dev/null 2>&1; then
     ssh-add --apple-load-keychain 2>/dev/null || ssh-add -A 2>/dev/null
@@ -94,23 +94,23 @@ fi
 
 # ==========================================
 # STARSHIP - https://github.com/starship/starship
-# Prompt. Ativo também no Warp (exige o input type "Shell (PS1)").
-# Para voltar ao prompt nativo do Warp: DOTFILES_STARSHIP_IN_WARP=0
-# no ~/.sensitive_variables (carregado antes deste arquivo).
+# Prompt. Also active in Warp (requires the "Shell (PS1)" input type).
+# To go back to Warp's native prompt: DOTFILES_STARSHIP_IN_WARP=0
+# in ~/.sensitive_variables (loaded before this file).
 # ==========================================
 if [[ "$DOTFILES_FAST_SHELL" == "1" ]]; then
     export STARSHIP_SHELL=""
 elif command -v starship >/dev/null 2>&1; then
     if [[ "$TERM_PROGRAM" != "WarpTerminal" ]] || [[ "${DOTFILES_STARSHIP_IN_WARP:-1}" == "1" ]]; then
         eval "$(starship init zsh)"
-        # Warp + zsh: restaura a linha extra após o prompt do starship
+        # Warp + zsh: restores the extra line after starship's prompt
         [[ "$TERM_PROGRAM" == "WarpTerminal" ]] && PROMPT="${PROMPT}"$'\n'
     fi
 fi
 
 # ==========================================
-# INTEGRAÇÕES DE IA LOCAIS - deepseek / qwen-mlx
-# Scripts próprios do repositório `ai/tools`.
+# LOCAL AI INTEGRATIONS - deepseek / qwen-mlx
+# This repository's own scripts (`ai/tools`).
 # ==========================================
 [[ -f "$REPOSITORY_HOME/ai/tools/deepseek-local-setup/shell/deepseek-ai.sh" ]] &&
     source "$REPOSITORY_HOME/ai/tools/deepseek-local-setup/shell/deepseek-ai.sh"
@@ -119,9 +119,9 @@ fi
     source "$REPOSITORY_HOME/ai/tools/qwen-mlx-toolkit/shell/qwen-mlx.sh"
 
 # ==========================================
-# PRIORIDADE FINAL DE PATH - pipx acima dos shims
-# Precisa ser a ÚLTIMA alteração de PATH: asdf e pyenv
-# prependam seus shims no init acima e sequestrariam
-# binários como `aws-okta-processor`.
+# FINAL PATH PRIORITY - pipx above the shims
+# Must be the LAST PATH change: asdf and pyenv
+# prepend their shims during the init above and would hijack
+# binaries like `aws-okta-processor`.
 # ==========================================
 export PATH="$HOME/.local/bin:$PATH"

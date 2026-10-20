@@ -1,5 +1,5 @@
-# # Configuração do Starship Prompt
-# # Ordem dos módulos no prompt
+# # Starship Prompt configuration
+# # Module order in the prompt
 # format = """
 # $python\
 # $nodejs\
@@ -10,7 +10,7 @@
 # $line_break\
 # $character"""
 
-# # Configuração do Python/Pyenv
+# # Python/Pyenv configuration
 # [python]
 # symbol = "🐍 "
 # python_binary = ["python", "python3", "python2"]
@@ -21,7 +21,7 @@
 # detect_files = [".python-version", "Pipfile", "requirements.txt", "pyproject.toml", "tox.ini"]
 # detect_folders = [".venv", "venv", "env"]
 
-# # Configuração do Node.js
+# # Node.js configuration
 # [nodejs]
 # symbol = "⬢ "
 # format = 'via [$symbol($version )]($style)'
@@ -30,7 +30,7 @@
 # detect_files = ["package.json", ".nvmrc"]
 # detect_folders = ["node_modules"]
 
-# # Configuração do Git Branch
+# # Git Branch configuration
 # [git_branch]
 # symbol = ""
 # format = '[$symbol$branch]($style) '
@@ -38,7 +38,7 @@
 # truncation_length = 20
 # truncation_symbol = "…"
 
-# # Configuração do Git Status
+# # Git Status configuration
 # [git_status]
 # format = '([\[$all_status$ahead_behind\]]($style) )'
 # style = "red bold"
@@ -54,7 +54,7 @@
 # renamed = "»${count}"
 # deleted = "✘${count}"
 
-# # Configuração do Kubernetes
+# # Kubernetes configuration
 # [kubernetes]
 # format = '[$symbol$context( \($namespace\))]($style) '
 # style = "cyan bold"
@@ -69,7 +69,7 @@
 # ".*/openshift-cluster/.*" = "openshift"
 # "gke_.*_(?P<var_cluster>[\\w-]+)" = "gke-$var_cluster"
 
-# # Configuração do diretório
+# # Directory configuration
 # [directory]
 # truncation_length = 3
 # truncate_to_repo = true
@@ -78,7 +78,7 @@
 # read_only = "🔒"
 # read_only_style = "red"
 
-# # Configuração do caractere de prompt
+# # Prompt character configuration
 # [character]
 # success_symbol = "[❯](purple)"
 # error_symbol = "[❯](red)"
@@ -93,7 +93,7 @@ format = """
 [┌──](bold purple) $directory$git_branch$git_status [::](bold purple) $time
 [└](bold purple)$cmd_duration[─❯ ](bold purple)"""
 
-# O right_format chama o módulo de forma limpa
+# right_format calls the module cleanly
 right_format = """(green)(${kubernetes}) (green)($python) (green)(${nodejs}) ${battery}"""
 
 [python]
@@ -251,7 +251,7 @@ detect_folders = ["node_modules"]
 # detect_folders = [".git"]
 
 
-# # TENTATIVA FINAL: Usando grupo de captura posicional e tornando o padrão extremamente permissivo
+# # FINAL ATTEMPT: Using a positional capture group and making the pattern extremely permissive
 
 
 [kubernetes]

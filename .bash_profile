@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
 # ==========================================
-# BASH PROFILE - Shell secundário
-# O shell principal é o zsh (ver .zshrc). Este arquivo existe
-# para quando algo cai no bash: scripts, `arch -x86_64 bash`,
-# containers e ferramentas que ignoram o $SHELL.
+# BASH PROFILE - Secondary shell
+# The primary shell is zsh (see .zshrc). This file exists
+# for when something falls back to bash: scripts, `arch -x86_64 bash`,
+# containers and tools that ignore $SHELL.
 #
-# Mudança importante: a versão anterior rodava init de zsh
-# (starship init zsh, completion.zsh.inc, pyenv init -) aqui
-# dentro, o que só funcionava por ser sourceado pelo zsh.
-# Agora cada shell inicializa o que é seu.
+# Important change: the previous version ran zsh init
+# (starship init zsh, completion.zsh.inc, pyenv init -) in here,
+# which only worked because it was sourced by zsh.
+# Now each shell initializes what belongs to it.
 #
-# Módulos compartilhados: .exports, .aliases, .functions
-# (.navigation e .warp-config são zsh-only e NÃO entram aqui)
+# Shared modules: .exports, .aliases, .functions
+# (.navigation and .warp-config are zsh-only and do NOT enter here)
 # ==========================================
 
 export DOTFILES="${DOTFILES:-$HOME/Documents/repository/dotfiles}"
@@ -20,7 +20,7 @@ export DOTFILES="${DOTFILES:-$HOME/Documents/repository/dotfiles}"
 [ -r "$HOME/.sensitive_variables" ] && . "$HOME/.sensitive_variables"
 
 # ==========================================
-# MÓDULOS COMPARTILHADOS - Portáveis entre bash e zsh
+# SHARED MODULES - Portable between bash and zsh
 # ==========================================
 for _dotfile in exports aliases functions; do
     [ -r "$DOTFILES/.$_dotfile" ] && . "$DOTFILES/.$_dotfile"
@@ -28,8 +28,8 @@ done
 unset _dotfile
 
 # ==========================================
-# FAST SHELL - Terminais automatizados
-# Mantém o shell mínimo em tasks do VS Code e CI.
+# FAST SHELL - Automated terminals
+# Keeps the shell minimal in VS Code tasks and CI.
 # ==========================================
 if [ -n "$VSCODE_GIT_IPC_HANDLE" ] || [ "$TERM_PROGRAM" = "vscode" ] || [ -n "$CI" ]; then
     export DOTFILES_FAST_SHELL=1
@@ -37,20 +37,20 @@ if [ -n "$VSCODE_GIT_IPC_HANDLE" ] || [ "$TERM_PROGRAM" = "vscode" ] || [ -n "$C
 fi
 
 # ==========================================
-# BASH OPTIONS - Comportamento do shell
-# Só funcionam no bash; por isso nunca estiveram ativas antes.
+# BASH OPTIONS - Shell behavior
+# Only work in bash; that's why they were never active before.
 # https://stackoverflow.com/questions/26616003
 # ==========================================
-shopt -s nocaseglob  # glob sem diferenciar maiúsculas
-shopt -s histappend  # anexa ao histórico em vez de sobrescrever
-shopt -s cdspell     # corrige typos em `cd`
+shopt -s nocaseglob  # case-insensitive globbing
+shopt -s histappend  # append to history instead of overwriting
+shopt -s cdspell     # fixes typos in `cd`
 for option in autocd globstar; do
     shopt -s "$option" 2>/dev/null
 done
 unset option
 
 # ==========================================
-# VERSION MANAGERS - Init no dialeto do bash
+# VERSION MANAGERS - Init in bash dialect
 # ==========================================
 [ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ] && . /opt/homebrew/opt/asdf/libexec/asdf.sh
 
@@ -60,7 +60,7 @@ if command -v pyenv >/dev/null 2>&1; then
 fi
 
 # ==========================================
-# GOOGLE CLOUD SDK - Versões .bash.inc
+# GOOGLE CLOUD SDK - .bash.inc versions
 # disabled by now
 # ==========================================
 # [ -f "$HOME/google-cloud-sdk/path.bash.inc" ] && . "$HOME/google-cloud-sdk/path.bash.inc"
@@ -79,8 +79,8 @@ elif [ -f /etc/bash_completion ]; then
 fi
 
 # ==========================================
-# COMPLETIONS - Regras pontuais
-# `g` herda o completion do git; hosts do ssh vêm do ~/.ssh/config.
+# COMPLETIONS - One-off rules
+# `g` inherits git's completion; ssh hosts come from ~/.ssh/config.
 # ==========================================
 if type _git >/dev/null 2>&1; then
     complete -o default -o nospace -F _git g
@@ -95,27 +95,27 @@ complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes Syste
 
 # ==========================================
 # STARSHIP - Prompt
-# Observação do Warp: o starship pode não renderizar quando
-# o shell padrão é /bin/bash — use o prompt nativo do Warp nesse caso.
+# Warp note: starship may not render when
+# the default shell is /bin/bash — use Warp's native prompt in that case.
 # ==========================================
 if [ "$DOTFILES_FAST_SHELL" != "1" ] && command -v starship >/dev/null 2>&1; then
     eval "$(starship init bash)"
 fi
 
 # ==========================================
-# WARPIFY - Blocos do Warp em subshells bash
+# WARPIFY - Warp blocks in bash subshells
 # ==========================================
 if [ "$TERM_PROGRAM" = "WarpTerminal" ]; then
     printf '\eP$f{"hook": "SourcedRcFileForWarp", "value": { "shell": "bash"}}\x9c'
 fi
 
 # ==========================================
-# PRIORIDADE FINAL DE PATH - pipx acima dos shims
-# Precisa vir depois do init de asdf/pyenv.
+# FINAL PATH PRIORITY - pipx above the shims
+# Must come after the asdf/pyenv init.
 # ==========================================
 export PATH="$HOME/.local/bin:$PATH"
 
 # ==========================================
-# PRIVADO - .extra (fora do git)
+# PRIVATE - .extra (outside git)
 # ==========================================
 [ -r "$HOME/.extra" ] && . "$HOME/.extra"

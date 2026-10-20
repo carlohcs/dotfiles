@@ -1,22 +1,22 @@
 #!/usr/bin/env zsh
 
 # ==========================================
-# NAVIGATION - Substituto dos aliases de pasta
-# Estratégia em 5 camadas, da mais automática à mais manual:
-#   1. zoxide   -> `cd nome` pula para pasta já visitada (frecency)
-#   2. cdpath   -> `cd hermes` funciona de qualquer lugar
-#   3. hash -d  -> `cd ~hermes` e prompt mostra ~hermes
-#   4. fzf      -> seleção interativa (Ctrl-T / Alt-C / fcd)
-#   5. fsearch  -> busca em disco inteiro quando nada acima acha
-# Os aliases antigos (hermes, web, mercury...) continuam
-# funcionando: são gerados automaticamente a partir do mapa abaixo.
+# NAVIGATION - Replacement for folder aliases
+# 5-layer strategy, from most automatic to most manual:
+#   1. zoxide   -> `cd name` jumps to an already-visited folder (frecency)
+#   2. cdpath   -> `cd hermes` works from anywhere
+#   3. hash -d  -> `cd ~hermes` and the prompt shows ~hermes
+#   4. fzf      -> interactive selection (Ctrl-T / Alt-C / fcd)
+#   5. fsearch  -> whole-disk search when none of the above find it
+# The old aliases (hermes, web, mercury...) keep working:
+# they're generated automatically from the map below.
 # ==========================================
 
 # ==========================================
-# ZSH OPTIONS - Navegação nativa
-# AUTO_CD: digitar o nome de uma pasta já faz o cd
-# AUTO_PUSHD: todo cd empilha, habilitando `cd -1`, `cd -2`...
-# CDABLE_VARS: `cd DOTFILES` funciona para variáveis de path
+# ZSH OPTIONS - Native navigation
+# AUTO_CD: typing a folder name alone does the cd
+# AUTO_PUSHD: every cd is pushed, enabling `cd -1`, `cd -2`...
+# CDABLE_VARS: `cd DOTFILES` works for path variables
 # ==========================================
 setopt AUTO_CD
 setopt AUTO_PUSHD
@@ -27,10 +27,10 @@ setopt CDABLE_VARS
 setopt EXTENDED_GLOB
 
 # ==========================================
-# MAPA DE DIRETÓRIOS - Fonte única da verdade
-# Cada entrada vira: named dir (~nome), entrada no cdpath
-# e alias legado (compatibilidade com a memória muscular).
-# Adicione pastas novas AQUI, não em `.aliases`.
+# DIRECTORY MAP - Single source of truth
+# Each entry becomes: a named dir (~name), a cdpath entry
+# and a legacy alias (muscle-memory compatibility).
+# Add new folders HERE, not in `.aliases`.
 # ==========================================
 typeset -A DOT_DIRS
 DOT_DIRS=(
@@ -52,15 +52,15 @@ DOT_DIRS=(
 for _dot_key _dot_dir in ${(kv)DOT_DIRS}; do
     [[ -d "$_dot_dir" ]] || continue
     hash -d "${_dot_key}=${_dot_dir}"          # cd ~hermes
-    alias "${_dot_key}=cd ${(q)_dot_dir}"      # compatibilidade legada
+    alias "${_dot_key}=cd ${(q)_dot_dir}"      # legacy compatibility
 done
 unset _dot_key _dot_dir
 
 # ==========================================
-# CDPATH - Pastas-pai pesquisáveis pelo `cd`
-# Com isso `cd hermes` funciona de qualquer diretório,
-# sem precisar de alias e com autocomplete por TAB.
-# O "." na primeira posição preserva o comportamento normal.
+# CDPATH - Parent folders searchable by `cd`
+# This makes `cd hermes` work from any directory,
+# with no alias needed and TAB autocomplete.
+# The "." in the first position preserves normal behavior.
 # ==========================================
 cdpath=(
     .
@@ -73,28 +73,28 @@ cdpath=(
 
 # ==========================================
 # ZOXIDE - https://github.com/ajeetdsouza/zoxide
-# O "cd que aprende": `cd herm` pula para a pasta mais
-# acessada cujo caminho contenha "herm".
-# Instale com: brew install zoxide
-# `--cmd cd` substitui o cd nativo (e mantém cd -, cd .., cd ~).
-# `cdi` abre a seleção interativa via fzf.
+# The "cd that learns": `cd herm` jumps to the most
+# accessed folder whose path contains "herm".
+# Install with: brew install zoxide
+# `--cmd cd` replaces the native cd (and keeps cd -, cd .., cd ~).
+# `cdi` opens the interactive fzf picker.
 # ==========================================
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init zsh --cmd cd)"
 
-    alias cdd='cdi'     # seleção interativa
+    alias cdd='cdi'     # interactive selection
     alias cd-list='zoxide query --list --score'
     alias cd-forget='zoxide remove'
 elif [[ -o interactive ]]; then
-    echo "⚠️  zoxide não encontrado. Instale com: brew install zoxide"
+    echo "⚠️  zoxide not found. Install with: brew install zoxide"
 fi
 
 # ==========================================
-# LISTAGEM AUTOMÁTICA - Substitui o override de cd()
-# A função cd() antiga conflitava com o zoxide.
-# O hook chpwd é o jeito nativo do zsh e também dispara
-# em `z`, `popd`, `cd -` e AUTO_CD.
-# Lista apenas diretórios pequenos para não travar o terminal.
+# AUTOMATIC LISTING - Replaces the cd() override
+# The old cd() function conflicted with zoxide.
+# The chpwd hook is zsh's native way and also fires
+# on `z`, `popd`, `cd -` and AUTO_CD.
+# Only lists small directories to avoid freezing the terminal.
 # ==========================================
 autoload -Uz add-zsh-hook
 
@@ -116,8 +116,8 @@ add-zsh-hook chpwd _dotfiles_list_on_cd
 
 # ==========================================
 # FZF - https://github.com/junegunn/fzf
-# Ctrl-T: insere arquivo | Ctrl-R: histórico | Alt-C: cd fuzzy
-# Instale com: brew install fzf fd bat eza
+# Ctrl-T: insert file | Ctrl-R: history | Alt-C: fuzzy cd
+# Install with: brew install fzf fd bat eza
 # ==========================================
 if command -v fzf >/dev/null 2>&1; then
     if command -v fd >/dev/null 2>&1; then
@@ -132,36 +132,36 @@ if command -v fzf >/dev/null 2>&1; then
     command -v eza >/dev/null 2>&1 &&
         export FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --color=always {}'"
 
-    # O plugin `fzf` do oh-my-zsh já carrega keybindings e completion.
-    # Descomente se não estiver usando o plugin:
+    # oh-my-zsh's `fzf` plugin already loads keybindings and completion.
+    # Uncomment if you're not using the plugin:
     # source <(fzf --zsh)
 fi
 
 # ==========================================
 # FSEARCH - https://github.com/noahdunnagan/fsearch
-# Busca no disco inteiro (macOS): nomes fuzzy com tolerância
-# a erro de digitação + grep indexado dentro dos arquivos.
-# ~1 ms sobre 8M de arquivos, via daemon + índice mmap.
-# IMPORTANTE: o fsearch NÃO é um "pulador de pastas" — quem
-# faz isso é o zoxide acima. Aqui ele acha o que o zoxide
-# ainda não conhece, e as funções abaixo alimentam o zoxide
-# com o resultado (fsearch -> cd -> zoxide aprende).
-# Instalação: rode `fsearch-setup`
+# Whole-disk search (macOS): fuzzy names with typo
+# tolerance + indexed grep inside files.
+# ~1 ms over 8M files, via daemon + mmap index.
+# IMPORTANT: fsearch is NOT a "folder jumper" — zoxide
+# above does that. Here it finds what zoxide doesn't
+# know yet, and the functions below feed zoxide
+# with the result (fsearch -> cd -> zoxide learns).
+# Installation: run `fsearch-setup`
 # ==========================================
 
 # ==========================================
-# FSEARCH - Instalação e manutenção do índice
-# --login registra como item de login (precisa de
-# Acesso Total ao Disco em Ajustes > Privacidade e Segurança).
+# FSEARCH - Index installation and maintenance
+# --login registers it as a login item (needs
+# Full Disk Access in Settings > Privacy & Security).
 # ==========================================
 fsearch-setup() {
     local arch_tarball="fsearch-aarch64-apple-darwin.tar.gz"
     local url="https://github.com/noahdunnagan/fsearch/releases/latest/download/${arch_tarball}"
 
     if command -v fsearch >/dev/null 2>&1; then
-        echo "✓ fsearch já instalado em: $(command -v fsearch)"
+        echo "✓ fsearch already installed at: $(command -v fsearch)"
     else
-        echo "⬇️  Baixando fsearch (Apple Silicon)..."
+        echo "⬇️  Downloading fsearch (Apple Silicon)..."
         local tmp
         tmp=$(mktemp -d) || return 1
         (
@@ -169,7 +169,7 @@ fsearch-setup() {
                 curl -fsSL "$url" | tar xz &&
                 ./fsearch install
         ) || {
-            echo "✗ Falha no download. Alternativa com Rust:"
+            echo "✗ Download failed. Rust alternative:"
             echo "  git clone https://github.com/noahdunnagan/fsearch && cd fsearch"
             echo "  cargo build --release && ./target/release/fsearch install"
             return 1
@@ -179,11 +179,11 @@ fsearch-setup() {
 
     mkdir -p "$FSEARCH_HOME"
 
-    # Pastas que não valem indexação de conteúdo
+    # Folders not worth indexing by content
     if [[ ! -f "$FSEARCH_SKIP_FILE" ]]; then
         cat >"$FSEARCH_SKIP_FILE" <<'EOF'
-# Pastas ignoradas na indexação de CONTEÚDO (nomes continuam indexados)
-# Uma por linha. `~` e comentários com `#` funcionam.
+# Folders skipped from CONTENT indexing (names are still indexed)
+# One per line. `~` and `#` comments work.
 ~/Library/Caches
 ~/.Trash
 ~/.npm
@@ -199,34 +199,34 @@ fsearch-setup() {
 ~/Library/Containers
 ~/Library/Application Support/Docker Desktop
 EOF
-        echo "✓ Lista de exclusões criada em: $FSEARCH_SKIP_FILE"
+        echo "✓ Skip list created at: $FSEARCH_SKIP_FILE"
     fi
 
     echo ""
-    echo "Próximos passos opcionais:"
-    echo "  fsearch install --login   # roda como item de login"
-    echo "  Ajustes > Privacidade e Segurança > Acesso Total ao Disco"
-    echo "    -> adicione ~/.local/bin/fsearch (refazer após cada rebuild)"
+    echo "Optional next steps:"
+    echo "  fsearch install --login   # runs as a login item"
+    echo "  Settings > Privacy & Security > Full Disk Access"
+    echo "    -> add ~/.local/bin/fsearch (redo after each rebuild)"
 }
 
 alias fsearch-skip='$EDITOR "$FSEARCH_SKIP_FILE"'
 alias fsearch-reindex='fsearch install'
 
-# O oh-my-zsh (plugin common-aliases) define `alias ff='find . -type f -name'`.
-# O zsh expande aliases ao PARSEAR, então `ff() {` vira erro de sintaxe e o
-# arquivo inteiro deixa de carregar. Por isso as funções abaixo usam a forma
-# `function nome {` (sem expansão de alias) e o unalias remove o alias antigo.
+# oh-my-zsh (common-aliases plugin) defines `alias ff='find . -type f -name'`.
+# zsh expands aliases while PARSING, so `ff() {` becomes a syntax error and the
+# whole file stops loading. That's why the functions below use the
+# `function name {` form (no alias expansion), and unalias removes the old alias.
 unalias ff fcd fgr fsym fgit 2>/dev/null
 
 if command -v fsearch >/dev/null 2>&1; then
 
     # ==========================================
-    # ff - Buscar arquivo por nome e abrir no editor
-    # Uso: ff main.rs | ff mian.rs (tolera typo) | ff 'readme in:~/Documents'
+    # ff - Find a file by name and open it in the editor
+    # Usage: ff main.rs | ff mian.rs (typo tolerant) | ff 'readme in:~/Documents'
     # ==========================================
     function ff {
         local query="$*"
-        [[ -z "$query" ]] && { echo "Uso: ff <nome-ou-query>"; return 1; }
+        [[ -z "$query" ]] && { echo "Usage: ff <name-or-query>"; return 1; }
 
         local file
         file=$(fsearch "$query limit:200" 2>/dev/null |
@@ -237,14 +237,14 @@ if command -v fsearch >/dev/null 2>&1; then
     }
 
     # ==========================================
-    # fcd - Buscar no disco e entrar na pasta do resultado
-    # Fecha o ciclo: o destino escolhido é gravado no zoxide,
-    # então na próxima vez basta `cd <fragmento>`.
-    # Uso: fcd hermes | fcd 'type:folder mercury'
+    # fcd - Search the disk and enter the result's folder
+    # Closes the loop: the chosen destination is written to zoxide,
+    # so next time plain `cd <fragment>` is enough.
+    # Usage: fcd hermes | fcd 'type:folder mercury'
     # ==========================================
     function fcd {
         local query="$*"
-        [[ -z "$query" ]] && { echo "Uso: fcd <nome>"; return 1; }
+        [[ -z "$query" ]] && { echo "Usage: fcd <name>"; return 1; }
 
         local hit dir
         hit=$(fsearch "$query limit:200" 2>/dev/null |
@@ -259,12 +259,12 @@ if command -v fsearch >/dev/null 2>&1; then
     }
 
     # ==========================================
-    # fgr - Grep indexado dentro dos arquivos
-    # Uso: fgr apply_dir | fgr 'ext:rs grep:apply_dir'
+    # fgr - Indexed grep inside files
+    # Usage: fgr apply_dir | fgr 'ext:rs grep:apply_dir'
     # ==========================================
     function fgr {
         local pattern="$*"
-        [[ -z "$pattern" ]] && { echo "Uso: fgr <padrão>"; return 1; }
+        [[ -z "$pattern" ]] && { echo "Usage: fgr <pattern>"; return 1; }
 
         case "$pattern" in
         *grep:* | *regex:*) fsearch "$pattern" ;;
@@ -273,17 +273,17 @@ if command -v fsearch >/dev/null 2>&1; then
     }
 
     # ==========================================
-    # fsym - Onde um símbolo está definido
-    # Uso: fsym apply_dir
+    # fsym - Where a symbol is defined
+    # Usage: fsym apply_dir
     # ==========================================
     function fsym {
-        [[ -z "$1" ]] && { echo "Uso: fsym <símbolo>"; return 1; }
+        [[ -z "$1" ]] && { echo "Usage: fsym <symbol>"; return 1; }
         fsearch "sym:$1 limit:50"
     }
 
     # ==========================================
-    # fgit - Arquivos modificados em um projeto
-    # Uso: fgit ~/Documents/repository/dotfiles
+    # fgit - Files modified in a project
+    # Usage: fgit ~/Documents/repository/dotfiles
     # ==========================================
     function fgit {
         local dir="${1:-$PWD}"
@@ -292,10 +292,10 @@ if command -v fsearch >/dev/null 2>&1; then
 
 else
     # ==========================================
-    # FALLBACK - fd + fzf enquanto o fsearch não está instalado
+    # FALLBACK - fd + fzf while fsearch isn't installed
     # ==========================================
     function fcd {
-        command -v fd >/dev/null 2>&1 || { echo "Instale fd ou rode fsearch-setup"; return 1; }
+        command -v fd >/dev/null 2>&1 || { echo "Install fd or run fsearch-setup"; return 1; }
         local dir
         dir=$(fd --type d --hidden --exclude .git . "${1:-$HOME}" | fzf --prompt='cd > ')
         [[ -n "$dir" ]] && { command -v zoxide >/dev/null 2>&1 && zoxide add "$dir"; builtin cd "$dir"; }
@@ -303,11 +303,11 @@ else
 fi
 
 # ==========================================
-# FSEARCH MCP - Servidor MCP para agentes de código
-# `fsearch mcp` expõe find_files, grep e multi_grep via stdio.
-# Registre no Claude Code com:
+# FSEARCH MCP - MCP server for coding agents
+# `fsearch mcp` exposes find_files, grep and multi_grep via stdio.
+# Register it with Claude Code:
 #   claude mcp add fsearch -- fsearch mcp
-# Descomente para registrar automaticamente na primeira carga:
+# Uncomment to register automatically on first load:
 # command -v claude >/dev/null 2>&1 && claude mcp add fsearch -- fsearch mcp 2>/dev/null
 # ==========================================
 alias fsearch-mcp='fsearch mcp'

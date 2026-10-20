@@ -1,44 +1,44 @@
 #!/usr/bin/env zsh
 
 # ==========================================
-# ZSHRC - Ponto de entrada do shell
-# Este arquivo faz APENAS o bootstrap do zsh/oh-my-zsh
-# e carrega os módulos do repositório de dotfiles.
-# Nada de alias, export ou função solta aqui.
+# ZSHRC - Shell entry point
+# This file ONLY bootstraps zsh/oh-my-zsh
+# and loads the dotfiles repository modules.
+# No loose alias, export or function here.
 #
-# Mapa dos módulos (carregados nesta ordem):
-#   .exports      -> variáveis de ambiente e PATH
-#   .bootstrap    -> init de ferramentas (asdf, pyenv, starship...)
-#   .aliases      -> atalhos de uma linha
-#   .functions    -> funções de shell
+# Module map (loaded in this order):
+#   .exports      -> environment variables and PATH
+#   .bootstrap    -> tooling init (asdf, pyenv, starship...)
+#   .aliases      -> one-line shortcuts
+#   .functions    -> shell functions
 #   .navigation   -> zoxide + fzf + fsearch + named dirs
-#   .warp-config  -> ajustes específicos do Warp
-#   .extras       -> catálogo opcional (tudo comentado)
-#   .extra        -> privado, fora do git (tokens, perfis)
+#   .warp-config  -> Warp-specific settings
+#   .extras       -> optional catalog (all commented out)
+#   .extra        -> private, outside git (tokens, profiles)
 # ==========================================
 
 # ==========================================
-# DOTFILES - Raiz do repositório
-# Redefina aqui se mover o repositório de lugar.
+# DOTFILES - Repository root
+# Redefine here if you move the repository elsewhere.
 # ==========================================
 export DOTFILES="${DOTFILES:-$HOME/Documents/repository/dotfiles}"
 
 # ==========================================
-# SENSITIVE VARIABLES - Tokens e caminhos privados
-# Carregado ANTES de tudo: o .exports só aplica os
-# fallbacks de GODADDY_*/POYNT_* se nada estiver definido,
-# e o .navigation monta o DOT_DIRS a partir deles.
-# Fora do git. chmod 600.
+# SENSITIVE VARIABLES - Private tokens and paths
+# Loaded BEFORE everything else: .exports only applies the
+# GODADDY_*/POYNT_* fallbacks if nothing is already set,
+# and .navigation builds DOT_DIRS from them.
+# Outside git. chmod 600.
 # ==========================================
 [[ -r "$HOME/.sensitive_variables" ]] && source "$HOME/.sensitive_variables"
 
 # ==========================================
-# OH MY ZSH - Framework base
+# OH MY ZSH - Base framework
 # https://github.com/ohmyzsh/ohmyzsh
 # ==========================================
 export ZSH="$HOME/.oh-my-zsh"
 
-# Com starship ativo o tema do oh-my-zsh é trabalho jogado fora.
+# With starship active, oh-my-zsh's theme is wasted work.
 if command -v starship >/dev/null 2>&1; then
     ZSH_THEME=""
 else
@@ -47,8 +47,8 @@ fi
 
 # ==========================================
 # OH MY ZSH - Plugins
-# Mantenha enxuto: cada plugin pesa no tempo de abertura.
-# git-extras e kubectl trazem completions pesadas.
+# Keep it lean: every plugin costs startup time.
+# git-extras and kubectl bring heavy completions.
 # ==========================================
 plugins=(
     git
@@ -61,10 +61,10 @@ plugins=(
 )
 
 # ==========================================
-# COMPLETIONS - fpath antes do compinit
-# O oh-my-zsh roda o compinit internamente, então tudo que
-# adiciona completion precisa entrar no fpath ANTES do source.
-# (A versão antiga rodava compinit duas vezes.)
+# COMPLETIONS - fpath before compinit
+# oh-my-zsh runs compinit internally, so anything that
+# adds completions must enter fpath BEFORE the source.
+# (The old version ran compinit twice.)
 # ==========================================
 fpath+=${ZSH_CUSTOM:-${ZSH:-$HOME/.oh-my-zsh}/custom}/plugins/zsh-completions/src
 [[ -d "$HOME/.docker/completions" ]] && fpath=("$HOME/.docker/completions" $fpath)
@@ -72,8 +72,8 @@ fpath+=${ZSH_CUSTOM:-${ZSH:-$HOME/.oh-my-zsh}/custom}/plugins/zsh-completions/sr
 source "$ZSH/oh-my-zsh.sh"
 
 # ==========================================
-# MÓDULOS - Carga dos dotfiles
-# A ordem importa: exports define o PATH que o bootstrap usa.
+# MODULES - Load the dotfiles
+# Order matters: exports defines the PATH that bootstrap uses.
 # ==========================================
 for _dotfile in exports bootstrap aliases functions navigation warp-config extras; do
     [[ -r "$DOTFILES/.$_dotfile" ]] && source "$DOTFILES/.$_dotfile"
@@ -81,22 +81,22 @@ done
 unset _dotfile
 
 # ==========================================
-# LEGADO - carlohcs.zsh
-# Arquivo antigo que concentrava tudo. Mantido por
-# compatibilidade: migre o conteúdo para os módulos acima
-# e depois apague esta linha.
+# LEGACY - carlohcs.zsh
+# Old file that used to hold everything. Kept for
+# compatibility: migrate the content to the modules above
+# and then delete this line.
 # ==========================================
 # [[ -r "$DOTFILES/carlohcs.zsh" ]] && source "$DOTFILES/carlohcs.zsh"
 
 # ==========================================
-# PRIVADO - .extra (fora do git)
-# Tokens, perfis corporativos e qualquer coisa que não
-# deve ser versionada: GODADDY_WORKSPACE, GODADDY_POYNT,
+# PRIVATE - .extra (outside git)
+# Tokens, corporate profiles and anything that should
+# not be versioned: GODADDY_WORKSPACE, GODADDY_POYNT,
 # POYNT_KEYS, GOCODE_API_TOKEN, ANTHROPIC_BASE_URL,
 # OPEN_CLAW_ASSISTANT_TELEGRAM_BOT_TOKEN...
-# Carregado por último para poder sobrescrever qualquer coisa.
+# Loaded last so it can override anything.
 # ==========================================
 [[ -r "$HOME/.extra" ]] && source "$HOME/.extra"
 
-# Configuração global do ccstatusline
+# Global ccstatusline configuration
 export CCSTATUSLINE_CONFIG="/Users/carlohcs/Documents/repository/dotfiles/ai/tools/ccstatusline-config.json"
