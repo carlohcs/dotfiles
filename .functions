@@ -204,6 +204,19 @@ crestart() {
 # be nested inside `repository`.
 # ==========================================
 _run-ai-profile() {
+    # If FORCE_PROFILE is 'work' or 'true', force the corporate profile
+    if [[ "$FORCE_PROFILE" == "work" || "$FORCE_PROFILE" == "true" ]]; then
+        echo work
+        return
+    fi
+    
+    # If FORCE_PROFILE is 'personal' or 'false', force the personal profile
+    if [[ "$FORCE_PROFILE" == "personal" || "$FORCE_PROFILE" == "false" ]]; then
+        echo personal
+        return
+    fi
+
+    # Default behavior (based on current directory)
     local -a parts=("${(@s:/:)${PWD:l}}")
     if (( ${parts[(Ie)poynt]} )); then
         echo work
