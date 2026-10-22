@@ -69,7 +69,7 @@ alias lt='eza --tree --level=2 --icons=auto'
 
 # ==========================================
 # ZSH-DEFER - https://github.com/romkatv/zsh-defer
-# Defers initialization of slow things (conda, gcloud,
+# Defers initialization of slow things (gcloud,
 # completions) until after the first prompt shows up.
 # git clone https://github.com/romkatv/zsh-defer ~/.zsh-defer
 # source ~/.zsh-defer/zsh-defer.plugin.zsh

@@ -38,35 +38,6 @@ if command -v pyenv >/dev/null 2>&1; then
 fi
 
 # ==========================================
-# CONDA - Anaconda distribution
-# Block managed by `conda init`. Loaded on demand
-# in FAST SHELL to avoid weighing down terminal startup.
-# Run `conda-activate` when needed.
-# disabled by now
-# ==========================================
-# _load_conda() {
-#     local __conda_setup
-#     __conda_setup="$('/opt/anaconda3/bin/conda' 'shell.zsh' 'hook' 2>/dev/null)"
-#     if [[ $? -eq 0 ]]; then
-#         eval "$__conda_setup"
-#     elif [[ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]]; then
-#         source "/opt/anaconda3/etc/profile.d/conda.sh"
-#     else
-#         path_prepend "/opt/anaconda3/bin"
-#     fi
-#     unset __conda_setup
-# }
-
-# conda-activate() {
-#     _load_conda
-#     [[ -n "$1" ]] && conda activate "$1"
-# }
-
-# if [[ "$DOTFILES_FAST_SHELL" != "1" ]] && [[ -d /opt/anaconda3 ]]; then
-#     _load_conda
-# fi
-
-# ==========================================
 # GOOGLE CLOUD SDK - gcloud CLI
 # Completion is heavy; skipped in FAST SHELL.
 # disabled by now

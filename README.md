@@ -16,7 +16,7 @@ Single-responsibility modules, loaded in order by `.zshrc`.
 | --- | --- |
 | `.zshrc` | Bootstraps zsh/oh-my-zsh and loads the modules. Nothing else. |
 | `.exports` | Environment variables and `$PATH`. Loaded first. |
-| `.bootstrap` | `eval`/`source` of tooling: asdf, pyenv, conda, gcloud, starship. |
+| `.bootstrap` | `eval`/`source` of tooling: asdf, pyenv, gcloud, starship. |
 | `.aliases` | One-liner shortcuts only. |
 | `.functions` | Functions only. |
 | `.navigation` | zoxide, fzf, fsearch, named dirs, `cdpath`. |
@@ -190,9 +190,9 @@ Everything in `.extras` is commented out on purpose. Each line costs millisecond
 
 ## Fast shell mode
 
-VS Code tasks, CI and other automated terminals set `DOTFILES_FAST_SHELL=1` automatically. That skips the cosmetic and expensive parts (starship, gcloud completions, eager conda, `ssh-add`) while keeping version managers loaded, so `node` and `python` still resolve. Conda is then available on demand through `conda-activate`.
+VS Code tasks, CI and other automated terminals set `DOTFILES_FAST_SHELL=1` automatically. That skips the cosmetic and expensive parts (starship, gcloud completions, `ssh-add`) while keeping version managers loaded, so `node` and `python` still resolve.
 
-If startup creeps past ~400ms, the usual suspects are conda, the gcloud completions and oh-my-zsh's `kubectl` plugin. [zsh-defer](https://github.com/romkatv/zsh-defer) and [mise](https://github.com/jdx/mise) — both already documented in `.extras` — handle most of it.
+If startup creeps past ~400ms, the gcloud completions and oh-my-zsh's `kubectl` plugin. [zsh-defer](https://github.com/romkatv/zsh-defer) and [mise](https://github.com/jdx/mise) — both already documented in `.extras` — handle most of it.
 
 ---
 
