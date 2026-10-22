@@ -129,9 +129,14 @@ export STARSHIP_CONFIG="$DOTFILES/starship.toml"
 # Proxy/MCP that cuts 60-95% of tokens sent to agents.
 # Two independent instances so personal and work sessions never
 # share context/cache — each profile gets its own port, passed to
-# `headroom wrap claude --port <n>` (the only thing the headroom
-# binary actually reads; it has no HEADROOM_PROXY_CMD/URL env var).
+# `headroom wrap --port <n>` (the only thing the headroom binary
+# actually reads; it has no HEADROOM_PROXY_CMD/URL env var).
 # `run-ai` in .functions picks the right port via _run-ai-profile.
+# Both profiles are proxied (so both get compression + cache): the
+# proxy forwards a subscription OAuth token upstream and tags the
+# session AuthMode.SUBSCRIPTION, which keeps compression conservative
+# to protect the cache prefix. Separate ports are required because the
+# proxy fixes its upstream (ANTHROPIC_TARGET_API_URL) at startup.
 # ==========================================
 export HEADROOM_PERSONAL_PORT="8787"
 export HEADROOM_WORK_PORT="8788"

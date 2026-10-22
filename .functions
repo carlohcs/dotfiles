@@ -214,15 +214,53 @@ _run-ai-profile() {
 
 # ==========================================
 # AI AGENTS - headroom proxy pair by profile
-# Personal and work each run their own headroom proxy instance
-# (see HEADROOM_PERSONAL_PORT / HEADROOM_WORK_PORT in .exports), so
-# their context/cache never mix. `headroom wrap claude` only reads
-# the real `--port` flag (no HEADROOM_PROXY_CMD/URL env var exists
-# in the headroom package), so this just resolves the port number.
+# Each profile gets its own headroom instance/port (see
+# HEADROOM_PERSONAL_PORT / HEADROOM_WORK_PORT in .exports) so their
+# context/cache never mix. `headroom wrap` only reads the real
+# `--port` flag, so this just resolves the number.
+# The split is load-bearing: the proxy reads ANTHROPIC_TARGET_API_URL
+# once at startup, so a single shared instance would pin both
+# profiles to whichever upstream happened to launch it (personal
+# traffic hitting the company gateway, or work traffic hitting
+# api.anthropic.com).
 # Usage: _headroom-proxy-port work|personal
 # ==========================================
 _headroom-proxy-port() {
     [[ "$1" == "work" ]] && echo "${HEADROOM_WORK_PORT:-8788}" || echo "${HEADROOM_PERSONAL_PORT:-8787}"
+}
+
+# ==========================================
+# AI AGENTS - warn about a cross-profile proxy
+# A headroom instance bakes in its upstream at startup, so reusing
+# one that the other profile started routes to the wrong API and
+# shows up as a 401/ECONNREFUSED mid-session. Warns if the port in
+# use was not launched from this profile's directory kind.
+# Usage: _headroom-proxy-check work|personal <port>
+# ==========================================
+_headroom-proxy-check() {
+    local profile="$1" port="$2" owner_pwd
+    command -v lsof >/dev/null 2>&1 || return 0
+
+    # Oldest listener on the port is the proxy parent.
+    local pid
+    pid="$(lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null | head -1)"
+    [[ -z "$pid" ]] && return 0
+
+    owner_pwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -1)"
+    [[ -z "$owner_pwd" ]] && return 0
+
+    local owner_profile
+    if [[ "${owner_pwd:l}" == */poynt/* || "${owner_pwd:l}" == */poynt ]]; then
+        owner_profile=work
+    else
+        owner_profile=personal
+    fi
+
+    if [[ "$owner_profile" != "$profile" ]]; then
+        echo "⚠️  headroom on port $port was started from a $owner_profile dir ($owner_pwd)."
+        echo "    Its upstream is fixed at startup, so this $profile session may hit the wrong API."
+        echo "    Fix: kill $pid   # then rerun run-ai claude"
+    fi
 }
 
 # ==========================================
@@ -247,6 +285,9 @@ run-ai() {
 
     profile="$(_run-ai-profile)"
 
+    # Personal claude is the only path that still works without headroom
+    # (subscription login goes straight to the API), so it's exempt from
+    # the hard requirement below.
     if [[ -z "$headroom_bin" ]] && [[ "$agent" != "claude-local" ]] &&
         ! { [[ "$agent" == "claude" ]] && [[ "$profile" == "personal" ]]; }; then
         echo "headroom not found in PATH/pyenv"
@@ -262,20 +303,30 @@ run-ai() {
             # ANTHROPIC_AUTH_TOKEN (token/gateway auth) and ANTHROPIC_API_KEY
             # are mutually exclusive for Claude Code; headroom refuses to
             # start if both are set (e.g. a stray export in .extra/settings).
+            _headroom-proxy-check work "$(_headroom-proxy-port work)"
             env -u ANTHROPIC_API_KEY \
                 ANTHROPIC_TARGET_API_URL="${ANTHROPIC_BASE_URL}" \
                 ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-$GOCODE_API_TOKEN}" \
                 command "$headroom_bin" wrap claude --port "$(_headroom-proxy-port work)" -- "$@"
             ;;
         *)
-            echo "👤 run-ai: personal credentials"
-            # No token/gateway: uses claude's subscription login (/login).
-            # Without headroom, falls back to claude directly.
+            echo "👤 run-ai: personal credentials (subscription login)"
+            # Subscription login (/login) through headroom: the proxy
+            # forwards the OAuth bearer token upstream and classifies the
+            # session as AuthMode.SUBSCRIPTION from the claude-cli/ UA, which
+            # keeps compression conservative (live zone only) to protect the
+            # cache prefix. Must NOT inherit the work gateway: ANTHROPIC_BASE_URL
+            # is the company endpoint and ANTHROPIC_TARGET_API_URL would point
+            # headroom at it, so both are cleared and headroom defaults to the
+            # real Anthropic API.
             if [[ -n "$headroom_bin" ]]; then
-                env -u ANTHROPIC_BASE_URL -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_API_KEY -u ANTHROPIC_TARGET_API_URL \
+                _headroom-proxy-check personal "$(_headroom-proxy-port personal)"
+                env -u ANTHROPIC_BASE_URL -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_API_KEY \
+                    -u ANTHROPIC_TARGET_API_URL -u ANTHROPIC_CUSTOM_HEADERS \
                     "$headroom_bin" wrap claude --port "$(_headroom-proxy-port personal)" -- "$@"
             else
-                env -u ANTHROPIC_BASE_URL -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_API_KEY -u ANTHROPIC_TARGET_API_URL \
+                env -u ANTHROPIC_BASE_URL -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_API_KEY \
+                    -u ANTHROPIC_TARGET_API_URL -u ANTHROPIC_CUSTOM_HEADERS \
                     claude "$@"
             fi
             ;;

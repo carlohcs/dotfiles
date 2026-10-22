@@ -88,6 +88,40 @@ chmod 600 ~/.sensitive_variables
 
 Keep `.sensitive_variables` and `.extra` in `.gitignore`.
 
+`ANTHROPIC_BASE_URL` here is the **company gateway**, consumed only by the
+work profile (`run-ai` passes it to headroom as `ANTHROPIC_TARGET_API_URL`).
+Because it is exported globally it also lands in personal shells, where it
+would break subscription login — `run-ai claude` strips it on that path, so
+leaving it set is fine. Do not point it at a headroom port.
+
+### Claude profiles
+
+`run-ai claude` picks a profile from `$PWD` (any `Poynt` component ⇒ work):
+
+| Profile | Auth | Upstream | Headroom port |
+| --- | --- | --- | --- |
+| work | `ANTHROPIC_AUTH_TOKEN` / `GOCODE_API_TOKEN` | company gateway | `8788` |
+| personal | claude.ai subscription login (`/login`) | `api.anthropic.com` | `8787` |
+
+Both profiles get headroom, so both get compression and cache savings
+(`headroom doctor` reports the lifetime totals). Headroom forwards the
+subscription OAuth token upstream and classifies the session as
+`AuthMode.SUBSCRIPTION` from the `claude-cli/` User-Agent, which
+deliberately keeps compression conservative — live zone only, no cache
+aligner, lower lossy ratio — to avoid rewriting prior turns and breaking
+the prompt-cache prefix. Work (API-token) sessions get the full
+`payg` policy.
+
+**Why two ports.** The proxy reads `ANTHROPIC_TARGET_API_URL` once at
+startup, so one shared instance would pin both profiles to whichever
+upstream launched it. `run-ai` warns if the port is already held by a proxy
+started from the other profile's directory and prints the `kill` to run.
+
+Two known caveats with `ANTHROPIC_BASE_URL` set (both client-side gates
+headroom cannot override): `/remote-control` is disabled, and Claude
+Desktop overwrites the variable so its sessions bypass the proxy — use the
+terminal CLI for proxied sessions.
+
 ---
 
 ## How to
