@@ -128,17 +128,13 @@ export STARSHIP_CONFIG="$DOTFILES/starship.toml"
 # HEADROOM - https://github.com/headroomlabs-ai/headroom
 # Proxy/MCP that cuts 60-95% of tokens sent to agents.
 # Two independent instances so personal and work sessions never
-# share context/cache — each profile gets its own port.
-# `run-ai` in .functions picks the right pair via _run-ai-profile.
+# share context/cache — each profile gets its own port, passed to
+# `headroom wrap claude --port <n>` (the only thing the headroom
+# binary actually reads; it has no HEADROOM_PROXY_CMD/URL env var).
+# `run-ai` in .functions picks the right port via _run-ai-profile.
 # ==========================================
-export HEADROOM_PERSONAL_PROXY_CMD="headroom proxy --port 8787"
-export HEADROOM_PERSONAL_PROXY_URL="http://127.0.0.1:8787"
-export HEADROOM_WORK_PROXY_CMD="headroom proxy --port 8788"
-export HEADROOM_WORK_PROXY_URL="http://127.0.0.1:8788"
-
-# Legacy names some tools still read directly; default to personal.
-export HEADROOM_PROXY_CMD="$HEADROOM_PERSONAL_PROXY_CMD"
-export HEADROOM_PROXY_URL="$HEADROOM_PERSONAL_PROXY_URL"
+export HEADROOM_PERSONAL_PORT="8787"
+export HEADROOM_WORK_PORT="8788"
 
 # ==========================================
 # CCSTATUSLINE - Claude Code status line

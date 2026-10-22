@@ -215,16 +215,14 @@ _run-ai-profile() {
 # ==========================================
 # AI AGENTS - headroom proxy pair by profile
 # Personal and work each run their own headroom proxy instance
-# (see HEADROOM_PERSONAL_* / HEADROOM_WORK_* in .exports), so
-# their context/cache never mix.
-# Usage: _headroom-proxy-cmd work|personal | _headroom-proxy-url work|personal
+# (see HEADROOM_PERSONAL_PORT / HEADROOM_WORK_PORT in .exports), so
+# their context/cache never mix. `headroom wrap claude` only reads
+# the real `--port` flag (no HEADROOM_PROXY_CMD/URL env var exists
+# in the headroom package), so this just resolves the port number.
+# Usage: _headroom-proxy-port work|personal
 # ==========================================
-_headroom-proxy-cmd() {
-    [[ "$1" == "work" ]] && echo "$HEADROOM_WORK_PROXY_CMD" || echo "$HEADROOM_PERSONAL_PROXY_CMD"
-}
-
-_headroom-proxy-url() {
-    [[ "$1" == "work" ]] && echo "$HEADROOM_WORK_PROXY_URL" || echo "$HEADROOM_PERSONAL_PROXY_URL"
+_headroom-proxy-port() {
+    [[ "$1" == "work" ]] && echo "${HEADROOM_WORK_PORT:-8788}" || echo "${HEADROOM_PERSONAL_PORT:-8787}"
 }
 
 # ==========================================
@@ -261,11 +259,13 @@ run-ai() {
         case "$profile" in
         work)
             echo "🏢 run-ai: company credentials (Poynt)"
-            ANTHROPIC_TARGET_API_URL="${ANTHROPIC_BASE_URL}" \
+            # ANTHROPIC_AUTH_TOKEN (token/gateway auth) and ANTHROPIC_API_KEY
+            # are mutually exclusive for Claude Code; headroom refuses to
+            # start if both are set (e.g. a stray export in .extra/settings).
+            env -u ANTHROPIC_API_KEY \
+                ANTHROPIC_TARGET_API_URL="${ANTHROPIC_BASE_URL}" \
                 ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-$GOCODE_API_TOKEN}" \
-                HEADROOM_PROXY_CMD="$(_headroom-proxy-cmd work)" \
-                HEADROOM_PROXY_URL="$(_headroom-proxy-url work)" \
-                command "$headroom_bin" wrap claude -- "$@"
+                command "$headroom_bin" wrap claude --port "$(_headroom-proxy-port work)" -- "$@"
             ;;
         *)
             echo "👤 run-ai: personal credentials"
@@ -273,9 +273,7 @@ run-ai() {
             # Without headroom, falls back to claude directly.
             if [[ -n "$headroom_bin" ]]; then
                 env -u ANTHROPIC_BASE_URL -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_API_KEY -u ANTHROPIC_TARGET_API_URL \
-                    HEADROOM_PROXY_CMD="$(_headroom-proxy-cmd personal)" \
-                    HEADROOM_PROXY_URL="$(_headroom-proxy-url personal)" \
-                    "$headroom_bin" wrap claude -- "$@"
+                    "$headroom_bin" wrap claude --port "$(_headroom-proxy-port personal)" -- "$@"
             else
                 env -u ANTHROPIC_BASE_URL -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_API_KEY -u ANTHROPIC_TARGET_API_URL \
                     claude "$@"
@@ -307,9 +305,7 @@ run-ai() {
             command claude "$@"
         ;;
     *)
-        HEADROOM_PROXY_CMD="$(_headroom-proxy-cmd "$profile")" \
-            HEADROOM_PROXY_URL="$(_headroom-proxy-url "$profile")" \
-            command "$headroom_bin" wrap "$agent" -- "$@"
+        command "$headroom_bin" wrap "$agent" --port "$(_headroom-proxy-port "$profile")" -- "$@"
         ;;
     esac
 }
