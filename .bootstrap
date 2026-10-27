@@ -22,10 +22,13 @@ fi
 
 # ==========================================
 # ASDF - https://github.com/asdf-vm/asdf
-# Multi-language version manager
+# Multi-language version manager.
+# v0.16+ is a Go binary with no libexec/asdf.sh to source;
+# shims just need to be on PATH, ahead of other shims/managers.
 # ==========================================
-if [[ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ]]; then
-    source /opt/homebrew/opt/asdf/libexec/asdf.sh
+if command -v asdf >/dev/null 2>&1; then
+    export ASDF_DATA_DIR="${ASDF_DATA_DIR:-$HOME/.asdf}"
+    path_prepend "$ASDF_DATA_DIR/shims"
 fi
 
 # ==========================================

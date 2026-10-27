@@ -51,8 +51,13 @@ unset option
 
 # ==========================================
 # VERSION MANAGERS - Init in bash dialect
+# ASDF v0.16+ is a Go binary with no libexec/asdf.sh to source;
+# shims just need to be on PATH, ahead of other shims/managers.
 # ==========================================
-[ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ] && . /opt/homebrew/opt/asdf/libexec/asdf.sh
+if command -v asdf >/dev/null 2>&1; then
+    export ASDF_DATA_DIR="${ASDF_DATA_DIR:-$HOME/.asdf}"
+    path_prepend "$ASDF_DATA_DIR/shims"
+fi
 
 if command -v pyenv >/dev/null 2>&1; then
     eval "$(pyenv init --path)"
