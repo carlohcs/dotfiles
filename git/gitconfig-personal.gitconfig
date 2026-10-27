@@ -1,0 +1,16 @@
+[user]
+  	name = carlohcs
+  	email = carlohcs@gmail.com
+	signingkey = B8C074FC2C2E0C70
+
+#[commit]
+#	gpgsign = true
+#
+#[gpg]
+#	program = age
+
+[core]
+	sshCommand = "ssh -i ~/.ssh/CarlohcsGithub"
+
+[url "ssh://git@github.com-personal/"]
+	insteadOf = https://github.com/

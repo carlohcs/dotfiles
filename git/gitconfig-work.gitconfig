@@ -1,0 +1,8 @@
+[user]
+        name = Carlos Santana
+        email = ccarvalhodesant@godaddy.com
+[core]
+	sshCommand = "ssh -i ~/.ssh/ccarvalhodesant-keys"
+
+[url "ssh://git@github.com-company/"]
+	insteadOf = https://github.com/
