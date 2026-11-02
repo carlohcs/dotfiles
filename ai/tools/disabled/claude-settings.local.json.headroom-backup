@@ -1,0 +1,17 @@
+{
+  "_comment": "Backup of ~/.claude/settings.local.json as it stood before disabling headroom on 2026-11-02. This SessionStart hook ran `headroom wrap selfheal` on every Claude Code session start/resume -- it self-heals headroom's own proxy wrapper state. Disabled because headroom's compression was corrupting/dropping context mid-session (see github.com/headroomlabs-ai/headroom issues #4321, #4550, #3974, and the note above `run-ai` in dotfiles/.functions). To re-enable: copy the \"hooks\" block below back into ~/.claude/settings.local.json.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/carlohcs/.pyenv/versions/3.14.6/bin/headroom wrap selfheal --marker headroom-wrap-selfheal",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

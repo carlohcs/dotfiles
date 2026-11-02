@@ -278,6 +278,17 @@ _headroom-proxy-check() {
 
 # ==========================================
 # AI AGENTS - headroom wrapper
+# DISABLED (2026-11-02): `claude` now aliases straight to
+# `claude-no-compress` instead of `run-ai claude`. headroom's own repo
+# (github.com/headroomlabs-ai/headroom) has several open bugs where its
+# compression corrupts or drops content it passes to the model — e.g.
+# #4321 "mangled by compressor", #4550 CCR cache keeps the reformatted
+# text instead of the original, #3974 a compression-stage exception can
+# permanently 500 a whole conversation instead of failing open. That
+# matched what we were seeing firsthand: Claude losing track of context
+# mid-session. Kept here (commented nowhere — still fully wired, just
+# unused) in case a future headroom release fixes this and it's worth
+# trying again via `run-ai claude` or `run-ai <agent>` directly.
 # Usage: run-ai claude [args] | run-ai claude-local | run-ai <agent>
 # ==========================================
 run-ai() {

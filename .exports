@@ -126,6 +126,9 @@ export STARSHIP_CONFIG="$DOTFILES/starship.toml"
 
 # ==========================================
 # HEADROOM - https://github.com/headroomlabs-ai/headroom
+# DISABLED (2026-11-02) — see the note above `run-ai` in .functions.
+# Ports kept so `run-ai claude`/`run-ai <agent>` still work if headroom
+# gets re-enabled later.
 # Proxy/MCP that cuts 60-95% of tokens sent to agents.
 # Two independent instances so personal and work sessions never
 # share context/cache — each profile gets its own port, passed to

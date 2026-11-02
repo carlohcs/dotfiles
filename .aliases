@@ -140,10 +140,12 @@ alias cstat='colima status && docker ps'
 alias connect-mysql="docker exec -it food-mysqldb-1 /bin/bash"
 
 # ==========================================
-# AI AGENTS - Wrappers with headroom
-# The `run-ai` function lives in `.functions`
+# AI AGENTS - Wrappers
+# `run-ai`/`claude-no-compress` live in `.functions`
+# `claude` points at `claude-no-compress` (headroom disabled — see the
+# note above `run-ai` in .functions for why and how to turn it back on).
 # ==========================================
-alias claude='run-ai claude'
+alias claude='claude-no-compress'
 alias claude-local='run-ai claude-local'
 alias gemini-local="aider --model gemini/gemini-3.6-flash --no-auto-commits"
 alias check-ai-models='llmfit'
